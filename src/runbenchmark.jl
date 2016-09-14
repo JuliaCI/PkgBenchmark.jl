@@ -39,19 +39,28 @@ end
 
 # Package benchmarking API
 
-pkgscript(pkg) = Pkg.dir(pkg, "benchmark", "runbenchmarks.jl")
-pkgresultsdir(pkg) = Pkg.dir(pkg, ".benchmarks")
+defaultscript(pkg) =
+    Pkg.dir(pkg, "benchmark", "benchmarks.jl")
+defaultresultsdir(pkg) =
+    Pkg.dir(pkg, "benchmark", ".results")
+defaultrequire(pkg) =
+    Pkg.dir(pkg, "benchmark", "REQUIRE")
 
 function benchmarkpkg(pkg;
-                      require=pkgrequire(pkg),
-                      resultsdir=pkgresultsdir(pkg),
+                      script=defaultscript(pkg),
+                      require=defaultrequire(pkg),
+                      resultsdir=defaultresultsdir(pkg),
                       fileresults=true,
                       promptfile=true,
                       promptoverwrite=true)
 
     !isfile(script) && error("Benchmark script $script not found")
-    info("Running benchmarks...")
-    res = withtemp(f->runbenchmark(script, f), tempname())
+    res = with_reqs(require, ()->info("Resolving dependencies for benchmark")) do
+        withtemp(tempname()) do f
+            info("Running benchmarks...")
+            runbenchmark(script, f)
+        end
+    end
     dirty = LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg)))
     sha = shastring(Pkg.dir(pkg), "HEAD")
     

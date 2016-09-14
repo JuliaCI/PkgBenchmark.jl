@@ -1,9 +1,14 @@
 using BenchmarkHelper
+using UnicodePlots
 
 @benchgroup "utf8" ["string", "unicode"] begin
     teststr = UTF8String(join(rand(MersenneTwister(1), 'a':'d', 10^4)))
     @bench "replace" replace($teststr, "a", "b")
     @bench "join" join($teststr, $teststr)
+
+    @benchgroup "plots" begin
+        @bench "fnplot" show(lineplot([sin, cos], -π/2, 2pi))
+    end
 end
 
 @benchgroup "trigonometry" ["math", "triangles"] begin
