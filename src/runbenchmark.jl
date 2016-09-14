@@ -50,8 +50,8 @@ function benchmarkpkg(pkg;
                       script=defaultscript(pkg),
                       require=defaultrequire(pkg),
                       resultsdir=defaultresultsdir(pkg),
-                      fileresults=true,
-                      promptfile=true,
+                      saveresults=true,
+                      promptsave=true,
                       promptoverwrite=true)
 
     !isfile(script) && error("Benchmark script $script not found")
@@ -65,13 +65,13 @@ function benchmarkpkg(pkg;
     sha = shastring(Pkg.dir(pkg), "HEAD")
     
     if !dirty
-        if fileresults
-            tofile = if promptfile
+        if saveresults
+            tosave = if promptsave
                 print("File results of this run? (commit=$(sha[1:6]), resultsdir=$resultsdir) (Y/n) ")
                 response = readline() |> strip
                 response == "" || lowercase(response) == "y"
             else true end
-            if tofile
+            if tosave
                 !isdir(resultsdir) && mkdir(resultsdir)
                 resfile = joinpath(resultsdir, sha*".jld")
                 writeresults(resfile, res)
