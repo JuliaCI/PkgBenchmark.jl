@@ -1,6 +1,6 @@
 module BenchmarkHelper
 
-export runbenchmark, judge, bisect
+export runbenchmark, bisect
 
 using BenchmarkTools
 

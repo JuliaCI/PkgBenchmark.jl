@@ -67,7 +67,7 @@ function benchmarkpkg(pkg;
     if !dirty
         if fileresults
             tofile = if promptfile
-                print("Do you want to file the benchmark results of this run? (commit=$(sha[1:6]), resultsdir=$resultsdir; use writeresults to save manually) (Y/n) ")
+                print("File results of this run? (commit=$(sha[1:6]), resultsdir=$resultsdir) (Y/n) ")
                 response = readline() |> strip
                 response == "" || lowercase(response) == "y"
             else true end
@@ -90,19 +90,30 @@ function benchmarkpkg(pkg, ref::String; kwargs...)
         error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
               "changes before benchmarking a specific commit")
 
-    LibGit2.with(GitRepo(Pkg.dir(pkg))) do repo
-        LibGit2.transact!(repo) do r
-            LibGit2.checkout!(r, revparseid(ref))
-            benchmarkpkg(pkg; kwargs...)
+    withcommit(GitRepo(Pkg.dir(pkg)), ref) do
+        benchmarkpkg(pkg; kwargs...)
+    end
+end
+
+function withcommit(f, repo, commit)
+    LibGit2.transact(repo) do r
+        branch = try LibGit2.branch(r) catch err; nothing end
+        prev = shastring(r, "HEAD")
+        try
+            LibGit2.checkout!(r, shastring(r,commit))
+            f()
+        catch err
+            rethrow(err)
+        finally
+            if branch !== nothing
+                LibGit2.branch!(r, branch)
+            end
         end
     end
 end
 
-function shastring(dir, refname)
-    LibGit2.with(GitRepo(dir)) do r
-        string(revparseid(r, refname))
-    end
-end
+shastring(r::GitRepo, refname) = string(revparseid(r, refname))
+shastring(dir::String, refname) = LibGit2.with(r->shastring(r, refname), GitRepo(dir))
 
 function writeresults(file, res)
     save(File(format"JLD", file), "time", time(), "trials", res)
