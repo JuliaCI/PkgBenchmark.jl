@@ -3,18 +3,23 @@
 Convention and helper functions for package developers to track performance changes.
 
 ```julia
+# installation
+
 Pkg.clone("git://github.com/shashi/BenchmarkHelper.jl.git")
 ```
 
-## Convention and macro sugar
+## Conventions
 
-Benchmarks are to be defined in `<PKGROOT>/benchmark/benchmarks.jl`, using the `@benchgroup` and `@bench` macros.
+- Benchmarks are to be written in `<PKGROOT>/benchmark/benchmarks.jl` and must use the `@benchgroup` and `@bench` macros. These are analogous to `@testset` and `@test` macros, with slightly different syntax.
+- `<PKGROOT>/benchmark/REQUIRE` can contain dependencies needed to run the benchmark suite.
 
-**`@benchgroup`**
+## Writing benchmarks
 
-Creates a benchmark group. Can have nested `@benchgroup` expressions and `@bench` expressions.
+### `@benchgroup`
 
-Syntax:
+`@benchgroup` defines a benchmark group. It can contain nested `@benchgroup` and `@bench` expressions.
+
+**Syntax:**
 
 ```julia
 @benchgroup <name> [<tags>] begin
@@ -24,17 +29,19 @@ end
 
 `<name>` is a string naming the benchmark group. `<tags>` is a vector of strings, tags for the benchmark group, and is optional. `<expr>` are expressions that can contain `@benchgroup` or `@bench` calls.
 
-**`@bench`**
+### `@bench`
 
-A single benchmark
+`@bench` creates a benchmark under the current `@benchgroup`.
 
-Syntax:
+**Syntax:**
 
 ```julia
 @bench <name>... <expr>
 ```
 
 `<name>` is a name/id for the benchmark, the last argument to `@bench`, `<expr>`, is the expression to be benchmarked, and has the same [interpolation features](https://github.com/JuliaCI/BenchmarkTools.jl/blob/master/doc/manual.md#interpolating-values-into-benchmark-expressions) as the `@benchmarkable` macro from BenchmarkTools.
+
+### Example
 
 An example `benchmark/benchmarks.jl` script would look like:
 
@@ -69,13 +76,13 @@ end
 
 ```
 
-Note that running the script directly does not actually run the benchmarks. See the next section.
+_Note that running this script directly does not actually run the benchmarks. See the next section._
 
-## Running a benchmark
+## Running a benchmark suite
 
 Use `benchmarkpkg` to run benchmarks written using the convention above.
 
-Syntax:
+**Syntax:**
 
 ```julia
 benchmarkpkg(pkg, [ref];
@@ -87,25 +94,25 @@ benchmarkpkg(pkg, [ref];
              promptoverwrite=true)
 ```
 
-Arguments:
+_Arguments:_
 
 * `pkg` is the package to benchmark
 * `ref` is the commit/branch to checkout for benchmarking. If left out, the package will be benchmarked in its current state.
 
-Keyword arguments:
+_Keyword arguments:_
 
 * `script` is the script with the benchmarks. Defaults to `PKG/benchmark/benchmarks.jl`
 * `require` is the REQUIRE file containing dependencies needed for the benchmark. Defaults to `PKG/benchmark/REQUIRE`.
-* `resultsdir` the directory where to file away results. Defaults to `PKG/benchmark/.results`. Provided the repository is not dirty, results generated will be saved in this directory in a file named `<SHA1_of_commit>.jld`. And can be used later by functions such as `compare`. If you choose to, you can save the results manually using `writeresults(file, results)` where `results` is the return value of `benchmarkpkg` function. It can be read back with `readresults(file)`.
+* `resultsdir` the directory where to file away results. Defaults to `PKG/benchmark/.results`. Provided the repository is not dirty, results generated will be saved in this directory in a file named `<SHA1_of_commit>.jld`. And can be used later by functions such as `judge`. If you choose to, you can save the results manually using `writeresults(file, results)` where `results` is the return value of `benchmarkpkg` function. It can be read back with `readresults(file)`.
 * `fileresults` if set to false, results will not be saved in `resultsdir`.
 * `promptfile` if set to false, you will prompted to confirm before saving the results.
 * `promptoverwrite` if set to false, will not asked to confirm before overwriting previously saved results for a commit.
 
-Returns:
+_Returns:_
 
 A `BenchmarkGroup` object with the results of the benchmark.
 
-Examples:
+_Example invocations:_
 
 ```julia
 using BenchmarkHelper
@@ -118,5 +125,32 @@ benchmarkpkg("MyPkg", "my-feature"; script="/home/me/mycustombenchmark.jl", resu
 
 ## Comparing commits
 
+You can use `judge` to compare benchmark results of two versions of the package.
+
+```julia
+judge(pkg, from_ref, [to_ref];
+    f=(minimum, minimum),
+    usesaved=(true, true),
+    script=defaultscript(pkg),
+    require=defaultrequire(pkg),
+    resultsdir=defaultresultsdir(pkg),
+    fileresults=true,
+    promptfile=true,
+    promptoverwrite=true)
+```
+
+Arguments:
+
+- `pkg` is the package to benchmark
+- `from_ref` is the base commit / branch
+- `to_ref` is the commit to compare against `from_ref`. If omitted, the current state of the code will be used.
+
+Keyword arguments:
+
+- `f` - tuple of estimator functions - one each for `from_ref`, `to_ref` respectively
+- `use_saved` - similar tuple of flags, if false will not use saved results
+- for description of other keyword arguments, see `benchmarkpkg`
+
 ## Bisecting
 
+TODO
