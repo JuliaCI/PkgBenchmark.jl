@@ -12,7 +12,8 @@ macro benchgroup(expr...)
     tags = length(expr) == 3 ? expr[2] : :([])
     grp = expr[end]
     quote
-        g = _top_group()[$(esc(name))] = BenchmarkGroup($(esc(tags)))
+        g = BenchmarkGroup($(esc(tags)))
+        _top_group()[$(esc(name))] = g
         _push_group!(g)
         $(esc(grp))
         _pop_group!()
