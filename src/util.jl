@@ -18,5 +18,5 @@ function with_reqs(f, reqs::Dict, pre=()->nothing)
     cd(Pkg.dir()) do
         Pkg.Entry.resolve(merge(Pkg.Reqs.parse("REQUIRE"), reqs))
     end
-    try f() catch ex rethow() finally cd(Pkg.Entry.resolve, Pkg.dir()) end
+    try f() catch ex rethrow() finally cd(Pkg.Entry.resolve, Pkg.dir()) end
 end
