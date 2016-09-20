@@ -46,13 +46,26 @@ defaultresultsdir(pkg) =
 defaultrequire(pkg) =
     Pkg.dir(pkg, "benchmark", "REQUIRE")
 
-function benchmarkpkg(pkg;
+const benchmarkkwargs = [ :script, :require, :resultsdir, :saveresults,
+                          :promptsave, :promptoverwrite ]
+
+function benchmarkpkg(pkg, ref=nothing;
                       script=defaultscript(pkg),
                       require=defaultrequire(pkg),
                       resultsdir=defaultresultsdir(pkg),
                       saveresults=true,
                       promptsave=true,
                       promptoverwrite=true)
+
+    if ref !== nothing
+        LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg))) &&
+            error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
+                  "changes before benchmarking a specific commit")
+
+        return withcommit(GitRepo(Pkg.dir(pkg)), ref) do
+            benchmarkpkg(pkg, nothing; kwargs...)
+        end
+    end
 
     !isfile(script) && error("Benchmark script $script not found")
     res = with_reqs(require, ()->info("Resolving dependencies for benchmark")) do
@@ -83,16 +96,6 @@ function benchmarkpkg(pkg;
     end
 
     res
-end
-
-function benchmarkpkg(pkg, ref::String; kwargs...)
-    LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg))) &&
-        error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
-              "changes before benchmarking a specific commit")
-
-    withcommit(GitRepo(Pkg.dir(pkg)), ref) do
-        benchmarkpkg(pkg; kwargs...)
-    end
 end
 
 function withcommit(f, repo, commit)

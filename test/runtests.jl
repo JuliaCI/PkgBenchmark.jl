@@ -24,7 +24,7 @@ end
     id = LibGit2.revparseid(GitRepo(Pkg.dir("BenchmarkHelper")), "HEAD")|>string
     resfile = joinpath(tmp, "$id.jld")
     if !LibGit2.isdirty(GitRepo(Pkg.dir("BenchmarkHelper")))
-        results = BenchmarkHelper.benchmarkpkg("BenchmarkHelper", "HEAD"; promptfile=false, promptoverwrite=false, resultsdir=tmp)
+        results = BenchmarkHelper.benchmarkpkg("BenchmarkHelper", "HEAD"; promptsave=false, resultsdir=tmp)
         test_structure(results)
 
         @test isfile(resfile)
@@ -35,4 +35,15 @@ end
         test_structure(results)
         @test !isfile(resfile)
     end
+end
+
+@testset "withresults" begin
+    withresults("BenchmarkHelper", ["HEAD~", "HEAD"]) do res
+        @test length(res) == 2
+        a,b=res
+        test_structure(a)
+        test_structure(b)
+    end
+    # make sure it doesn't error out
+    judge("BenchmarkHelper", "HEAD~", "HEAD")
 end
