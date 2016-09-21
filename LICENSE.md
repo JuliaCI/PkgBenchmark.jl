@@ -1,4 +1,4 @@
-The BenchmarkHelper.jl package is licensed under the MIT "Expat" License:
+The PkgBenchmark.jl package is licensed under the MIT "Expat" License:
 
 > Copyright (c) 2016: Shashi Gowda.
 >

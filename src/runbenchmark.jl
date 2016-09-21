@@ -16,8 +16,8 @@ function benchmark_proc(file, output)
     julia_exe = Base.julia_cmd()
     exec_str =
         """
-        using BenchmarkHelper
-        BenchmarkHelper.runbenchmark_local("$file", "$output")
+        using PkgBenchmark
+        PkgBenchmark.runbenchmark_local("$file", "$output")
         """
     run(`$julia_exe $color $compilecache -e $exec_str`)
 end

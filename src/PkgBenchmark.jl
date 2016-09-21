@@ -1,4 +1,4 @@
-module BenchmarkHelper
+module PkgBenchmark
 
 export runbenchmark, bisect
 

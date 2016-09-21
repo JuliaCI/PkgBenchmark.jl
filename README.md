@@ -1,11 +1,11 @@
-# BenchmarkHelper
+# PkgBenchmark
 
 Convention and helper functions for package developers to track performance changes.
 
 ```julia
 # installation
 
-Pkg.clone("git://github.com/shashi/BenchmarkHelper.jl.git")
+Pkg.clone("git://github.com/shashi/PkgBenchmark.jl.git")
 ```
 
 ## Conventions
@@ -46,7 +46,7 @@ end
 An example `benchmark/benchmarks.jl` script would look like:
 
 ```julia
-using BenchmarkHelper
+using PkgBenchmark
 
 @benchgroup "utf8" ["string", "unicode"] begin
     teststr = UTF8String(join(rand(MersenneTwister(1), 'a':'d', 10^4)))
@@ -115,7 +115,7 @@ A `BenchmarkGroup` object with the results of the benchmark.
 _Example invocations:_
 
 ```julia
-using BenchmarkHelper
+using PkgBenchmark
 
 benchmarkpkg("MyPkg") # run the benchmarks at the current state of the repository
 benchmarkpkg("MyPkg", "my-feature") # run the benchmarks for a particular branch/commit
