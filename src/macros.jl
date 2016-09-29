@@ -1,4 +1,5 @@
-export @benchgroup, @bench
+using BenchmarkTools
+export @benchgroup, @bench, root_group
 
 const _benchmark_stack = Any[BenchmarkGroup()]
 
@@ -6,6 +7,8 @@ _reset_stack() = (empty!(_benchmark_stack); push!(_benchmark_stack, BenchmarkGro
 _top_group() = _benchmark_stack[end]
 _push_group!(g) = push!(_benchmark_stack, g)
 _pop_group!() = pop!(_benchmark_stack)
+
+root_group() = _top_group()
 
 macro benchgroup(expr...)
     name = expr[1]
@@ -20,12 +23,15 @@ macro benchgroup(expr...)
     end
 end
 
+ok_to_splat(x) = (x,)
+ok_to_splat(x::Tuple) = x
+
 macro bench(expr...)
-    id = expr[1:end-1]
-    bexpr = expr[end]
+    id = expr[1]
+    bexpr = expr[2:end]
+    b = :(BenchmarkTools.@benchmarkable $(bexpr...))
 
     quote
-        b = @benchmarkable $(esc(bexpr))
-        _top_group()[$(esc(id))...] = b
+        _top_group()[ok_to_splat($(esc(id)))...] = $(esc(b))
     end
 end

@@ -16,7 +16,7 @@ end
     @benchgroup "circular" begin
         for f in (sin, cos, tan)
             for x in (0.0, pi)
-                @bench string(f) x $(f)($x)
+                @bench string(f), x $(f)($x)
             end
         end
     end
@@ -24,7 +24,7 @@ end
     @benchgroup "hyperbolic" begin
         for f in (sinh, cosh, tanh)
             for x in (0.0, pi)
-                @bench string(f) x $(f)($x)
+                @bench string(f), x $(f)($x)
             end
         end
     end
