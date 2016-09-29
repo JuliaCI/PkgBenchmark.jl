@@ -1,5 +1,7 @@
 # PkgBenchmark
 
+[![Build Status](https://travis-ci.org/JuliaCI/PkgBenchmark.jl.svg?branch=master)](https://travis-ci.org/JuliaCI/PkgBenchmark.jl)
+
 Convention and helper functions for package developers to track performance changes.
 
 ```julia
