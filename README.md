@@ -90,6 +90,8 @@ benchmarkpkg(pkg, [ref];
              require=defaultrequire(pkg),
              resultsdir=defaultresultsdir(pkg),
              saveresults=true,
+             tunefile=defaulttunefile(pkg),
+             retune=false,
              promptsave=true,
              promptoverwrite=true)
 ```
@@ -105,6 +107,9 @@ _Keyword arguments:_
 * `require` is the REQUIRE file containing dependencies needed for the benchmark. Defaults to `PKG/benchmark/REQUIRE`.
 * `resultsdir` the directory where to file away results. Defaults to `PKG/benchmark/.results`. Provided the repository is not dirty, results generated will be saved in this directory in a file named `<SHA1_of_commit>.jld`. And can be used later by functions such as `judge`. If you choose to, you can save the results manually using `writeresults(file, results)` where `results` is the return value of `benchmarkpkg` function. It can be read back with `readresults(file)`.
 * `saveresults` if set to false, results will not be saved in `resultsdir`.
+* `promptsave` if set to false, you will prompted to confirm before saving the results.
+* `tunefile` file to use for tuning benchmarks, will be created if doesn't exist. Defaults to `PKG/benchmark/.tune.jld`
+* `retune` force a re-tune, saving results to the tune file
 * `promptsave` if set to false, you will prompted to confirm before saving the results.
 * `promptoverwrite` if set to false, will not asked to confirm before overwriting previously saved results for a commit.
 

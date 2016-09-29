@@ -5,27 +5,29 @@ import Base.LibGit2: GitRepo, Oid, revparseid
 using FileIO
 using JLD
 
-function runbenchmark(file::String, output::String)
-    benchmark_proc(file, output)
+function runbenchmark(file::String, output::String, tunefile::String; retune=false)
+    benchmark_proc(file, output, tunefile, retune=retune)
     readresults(output)
 end
 
-function benchmark_proc(file, output)
+function benchmark_proc(file, output, tunefile; retune=false)
     color = Base.have_color? "--color=yes" : "--color=no"
     compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
     julia_exe = Base.julia_cmd()
     exec_str =
         """
         using PkgBenchmark
-        PkgBenchmark.runbenchmark_local("$file", "$output")
+        PkgBenchmark.runbenchmark_local("$file", "$output", "$tunefile", $retune )
         """
     run(`$julia_exe $color $compilecache -e $exec_str`)
 end
 
-function runbenchmark_local(file, output)
+function runbenchmark_local(file, output, tunefile, retune)
     _reset_stack()
     include(file)
-    results = run(_top_group())
+    suite = root_group()
+    cached_tune(tunefile, suite, retune)
+    results = run(suite)
     writeresults(output, results)
     results
 end
@@ -45,22 +47,24 @@ defaultresultsdir(pkg) =
     Pkg.dir(pkg, "benchmark", ".results")
 defaultrequire(pkg) =
     Pkg.dir(pkg, "benchmark", "REQUIRE")
-
-const benchmarkkwargs = [ :script, :require, :resultsdir, :saveresults,
-                          :promptsave, :promptoverwrite ]
+defaulttunefile(pkg) =
+    Pkg.dir(pkg, "benchmark", ".tune.jld")
 
 function benchmarkpkg(pkg, ref=nothing;
                       script=defaultscript(pkg),
                       require=defaultrequire(pkg),
                       resultsdir=defaultresultsdir(pkg),
+                      tunefile=defaulttunefile(pkg),
+                      retune=false,
                       saveresults=true,
                       promptsave=true,
                       promptoverwrite=true)
 
     if ref !== nothing
-        LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg))) &&
+        if LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg)))
             error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
                   "changes before benchmarking a specific commit")
+        end
 
         return withcommit(GitRepo(Pkg.dir(pkg)), ref) do
             benchmarkpkg(pkg, nothing; kwargs...)
@@ -71,7 +75,7 @@ function benchmarkpkg(pkg, ref=nothing;
     res = with_reqs(require, ()->info("Resolving dependencies for benchmark")) do
         withtemp(tempname()) do f
             info("Running benchmarks...")
-            runbenchmark(script, f)
+            runbenchmark(script, f, tunefile; retune=retune)
         end
     end
     dirty = LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg)))
@@ -126,4 +130,16 @@ function readresults(file)
     JLD.jldopen(file,"r") do f
         read(f, "trials")
     end
+end
+
+function cached_tune(tune_file, suite, force)
+    if isfile(tune_file) && !force
+       println("Using benchmark tuning data in $tune_file")
+       loadparams!(suite, JLD.load(tune_file, "suite"), :evals, :samples)
+    else
+       println("Creating benchmark tuning file $tune_file")
+       tune!(suite)
+       JLD.save(tune_file, "suite", params(suite))
+    end
+    suite
 end
