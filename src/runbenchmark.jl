@@ -5,7 +5,7 @@ import Base.LibGit2: GitRepo, Oid, revparseid
 using FileIO
 using JLD
 
-function runbenchmark(file::String, output::String, tunefile::String; retune=false)
+function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false)
     benchmark_proc(file, output, tunefile, retune=retune)
     readresults(output)
 end
@@ -126,7 +126,7 @@ function withcommit(f, repo, commit)
 end
 
 shastring(r::GitRepo, refname) = string(revparseid(r, refname))
-shastring(dir::String, refname) = LibGit2.with(r->shastring(r, refname), GitRepo(dir))
+shastring(dir::AbstractString, refname) = LibGit2.with(r->shastring(r, refname), GitRepo(dir))
 
 function writeresults(file, res)
     save(File(format"JLD", file), "time", time(), "trials", res)

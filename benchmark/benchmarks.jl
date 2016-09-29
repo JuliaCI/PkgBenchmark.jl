@@ -2,7 +2,7 @@ using PkgBenchmark
 using UnicodePlots
 
 @benchgroup "utf8" ["string", "unicode"] begin
-    teststr = UTF8String(join(rand(MersenneTwister(1), 'a':'d', 10^4)))
+    teststr = String(join(rand(MersenneTwister(1), 'a':'d', 10^4)))
     @bench "replace" replace($teststr, "a", "b")
     @bench "join" join($teststr, $teststr)
 
