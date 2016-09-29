@@ -1,4 +1,4 @@
-using BenchmarkHelper
+using PkgBenchmark
 using UnicodePlots
 
 @benchgroup "utf8" ["string", "unicode"] begin
