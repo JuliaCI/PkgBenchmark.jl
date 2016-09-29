@@ -7,7 +7,7 @@ using UnicodePlots
     @bench "join" join($teststr, $teststr)
 
     @benchgroup "plots" begin
-        @bench "fnplot" show(lineplot([sin, cos], -π/2, 2pi))
+        @bench "fnplot" lineplot([sin, cos], -π/2, 2pi)
     end
 end
 

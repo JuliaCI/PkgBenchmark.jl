@@ -60,46 +60,52 @@ function benchmarkpkg(pkg, ref=nothing;
                       promptsave=true,
                       promptoverwrite=true)
 
+    function do_benchmark()
+        !isfile(script) && error("Benchmark script $script not found")
+
+        res = with_reqs(require, ()->info("Resolving dependencies for benchmark")) do
+            withtemp(tempname()) do f
+                info("Running benchmarks...")
+                runbenchmark(script, f, tunefile; retune=retune)
+            end
+        end
+
+        dirty = LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg)))
+        sha = shastring(Pkg.dir(pkg), "HEAD")
+
+        if !dirty
+            if saveresults
+                tosave = if promptsave
+                    print("File results of this run? (commit=$(sha[1:6]), resultsdir=$resultsdir) (Y/n) ")
+                    response = readline() |> strip
+                    response == "" || lowercase(response) == "y"
+                else true end
+                if tosave
+                    !isdir(resultsdir) && mkdir(resultsdir)
+                    resfile = joinpath(resultsdir, sha*".jld")
+                    writeresults(resfile, res)
+                    info("Results of the benchmark were written to $resfile")
+                end
+            end
+        else
+            warn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
+        end
+
+        res
+    end
+
     if ref !== nothing
         if LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg)))
             error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
                   "changes before benchmarking a specific commit")
         end
 
-        return withcommit(GitRepo(Pkg.dir(pkg)), ref) do
-            benchmarkpkg(pkg, nothing; kwargs...)
-        end
-    end
-
-    !isfile(script) && error("Benchmark script $script not found")
-    res = with_reqs(require, ()->info("Resolving dependencies for benchmark")) do
-        withtemp(tempname()) do f
-            info("Running benchmarks...")
-            runbenchmark(script, f, tunefile; retune=retune)
-        end
-    end
-    dirty = LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg)))
-    sha = shastring(Pkg.dir(pkg), "HEAD")
-    
-    if !dirty
-        if saveresults
-            tosave = if promptsave
-                print("File results of this run? (commit=$(sha[1:6]), resultsdir=$resultsdir) (Y/n) ")
-                response = readline() |> strip
-                response == "" || lowercase(response) == "y"
-            else true end
-            if tosave
-                !isdir(resultsdir) && mkdir(resultsdir)
-                resfile = joinpath(resultsdir, sha*".jld")
-                writeresults(resfile, res)
-                info("Results of the benchmark were written to $resfile")
-            end
-        end
+        return withcommit(do_benchmark, GitRepo(Pkg.dir(pkg)), ref)
     else
-        warn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
+        # benchmark on the current state of the repo
+        do_benchmark()
     end
 
-    res
 end
 
 function withcommit(f, repo, commit)
