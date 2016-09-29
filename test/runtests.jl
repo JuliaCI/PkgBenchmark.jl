@@ -42,14 +42,13 @@ end
 
 @testset "withresults" begin
     if !LibGit2.isdirty(GitRepo(Pkg.dir("PkgBenchmark")))
-        withresults("PkgBenchmark", ["HEAD~", "HEAD"]) do res
+        withresults("PkgBenchmark", ["HEAD~", "HEAD"], promptsave=false) do res
             @test length(res) == 2
             a,b=res
             test_structure(a)
             test_structure(b)
+            test_structure(judge(minimum(a),minimum(b)))
         end
-
-        judge("PkgBenchmark", "HEAD~", "HEAD")
     end
     # make sure it doesn't error out
 end
