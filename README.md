@@ -135,7 +135,7 @@ benchmarkpkg("MyPkg", "my-feature"; script="/home/me/mycustombenchmark.jl", resu
 You can use `judge` to compare benchmark results of two versions of the package.
 
 ```julia
-judge(pkg, baseline, [candidate];
+results = judge(pkg, baseline, [candidate];
     f=(minimum, minimum),
     usesaved=(true, true),
     script=defaultscript(pkg),
@@ -145,6 +145,8 @@ judge(pkg, baseline, [candidate];
     promptsave=true,
     promptoverwrite=true)
 ```
+
+You can call `showall(results)` to see a comparison of all the benchmarks.
 
 Arguments:
 
