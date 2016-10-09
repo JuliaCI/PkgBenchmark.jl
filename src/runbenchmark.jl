@@ -14,10 +14,11 @@ function benchmark_proc(file, output, tunefile; retune=false)
     color = Base.have_color? "--color=yes" : "--color=no"
     compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
     julia_exe = Base.julia_cmd()
+    _file, _output, _tunefile = map(escape_string, (file, output, tunefile))
     exec_str =
         """
         using PkgBenchmark
-        PkgBenchmark.runbenchmark_local("$file", "$output", "$tunefile", $retune )
+        PkgBenchmark.runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
         """
     run(`$julia_exe $color $compilecache -e $exec_str`)
 end
