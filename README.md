@@ -1,5 +1,7 @@
 # PkgBenchmark
 
+[![PkgBenchmark](http://pkg.julialang.org/badges/PkgBenchmark_0.5.svg)](http://pkg.julialang.org/?pkg=PkgBenchmark)
+[![PkgBenchmark](http://pkg.julialang.org/badges/PkgBenchmark_0.6.svg)](http://pkg.julialang.org/?pkg=PkgBenchmark)
 [![Build Status](https://travis-ci.org/JuliaCI/PkgBenchmark.jl.svg?branch=master)](https://travis-ci.org/JuliaCI/PkgBenchmark.jl)
 
 Convention and helper functions for package developers to track performance changes.
@@ -7,7 +9,7 @@ Convention and helper functions for package developers to track performance chan
 ```julia
 # installation
 
-Pkg.clone("git://github.com/shashi/PkgBenchmark.jl.git")
+Pkg.add("PkgBenchmark")
 ```
 
 ## Conventions
