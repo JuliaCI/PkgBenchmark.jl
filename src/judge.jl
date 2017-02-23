@@ -1,6 +1,10 @@
 export judge, withresults
 
 function _cached(pkg, ref; resultsdir=defaultresultsdir(pkg), kws...)
+    if isa(ref, Void)
+        return benchmarkpkg(pkg, ref;resultsdir=resultsdir, kws...)
+    end
+
     sha = shastring(Pkg.dir(pkg), ref)
     file = joinpath(resultsdir, sha*".jld")
     if isfile(file)
@@ -22,7 +26,11 @@ function withresults(f::Function, pkg::String, refs;
         for (r,s) in zip(refs, use_saved)] |> f
 end
 
-function BenchmarkTools.judge(pkg::String, ref1::String, ref2::String; f=minimum, judgekwargs=Dict(), kwargs...)
+function BenchmarkTools.judge(pkg::String, ref1, ref2::String; f=minimum, judgekwargs=Dict(), kwargs...)
     fs = _repeat(f, 2)
     withresults(rs->judge(map((f,x)->f(x), fs, rs)...; judgekwargs...), pkg, (ref1, ref2); kwargs...)
+end
+
+function BenchmarkTools.judge(pkg::String, ref2::String; kwargs...)
+    judge(pkg, nothing, ref2; kwargs...)
 end
