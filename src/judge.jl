@@ -24,7 +24,11 @@ function withresults(f::Function, pkg::String, refs;
         for (r,s) in zip(refs, use_saved)] |> f
 end
 
-function BenchmarkTools.judge(pkg::String, ref1::String, ref2::Union{Void,String}=nothing; f=minimum, judgekwargs=Dict(), kwargs...)
+function BenchmarkTools.judge(pkg::String, ref1::Union{String,Void}, ref2::String; f=minimum, judgekwargs=Dict(), kwargs...)
     fs = _repeat(f, 2)
     withresults(rs->judge(map((f,x)->f(x), fs, rs)...; judgekwargs...), pkg, (ref1, ref2); kwargs...)
+end
+
+function BenchmarkTools.judge(pkg::String, ref2::String; kwargs...)
+    judge(pkg, nothing, ref2; kwargs...)
 end

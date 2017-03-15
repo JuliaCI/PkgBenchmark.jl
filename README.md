@@ -137,7 +137,7 @@ benchmarkpkg("MyPkg", "my-feature"; script="/home/me/mycustombenchmark.jl", resu
 You can use `judge` to compare benchmark results of two versions of the package.
 
 ```julia
-results = judge(pkg, baseline, [candidate];
+judge(pkg, [ref], baseline;
     f=(minimum, minimum),
     usesaved=(true, true),
     script=defaultscript(pkg),
@@ -153,8 +153,8 @@ You can call `showall(results)` to see a comparison of all the benchmarks.
 Arguments:
 
 - `pkg` is the package to benchmark
-- `from_ref` is the base commit / branch
-- `to_ref` is the commit to compare against `from_ref`. If omitted, the current state of the code will be used.
+- `ref` optional, the commit to judge. If skipped, use the current state of the package repo.
+- `baseline` is the commit to compare `ref` against.
 
 Keyword arguments:
 
