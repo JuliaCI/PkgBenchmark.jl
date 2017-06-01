@@ -45,11 +45,11 @@ end
 defaultscript(pkg) =
     Pkg.dir(pkg, "benchmark", "benchmarks.jl")
 defaultresultsdir(pkg) =
-    Pkg.dir(pkg, "benchmark", ".results")
+    Pkg.dir(".benchmarks", pkg, "results")
 defaultrequire(pkg) =
     Pkg.dir(pkg, "benchmark", "REQUIRE")
 defaulttunefile(pkg) =
-    Pkg.dir(pkg, "benchmark", ".tune.jld")
+    Pkg.dir(".benchmarks", pkg, ".tune.jld")
 
 function benchmarkpkg(pkg, ref=nothing;
                       script=defaultscript(pkg),
@@ -82,7 +82,7 @@ function benchmarkpkg(pkg, ref=nothing;
                     response == "" || lowercase(response) == "y"
                 else true end
                 if tosave
-                    !isdir(resultsdir) && mkdir(resultsdir)
+                    !isdir(resultsdir) && mkpath(resultsdir)
                     resfile = joinpath(resultsdir, sha*".jld")
                     writeresults(resfile, res)
                     info("Results of the benchmark were written to $resfile")
@@ -145,6 +145,7 @@ function cached_tune(tune_file, suite, force)
        loadparams!(suite, JLD.load(tune_file, "suite"), :evals, :samples)
     else
        println("Creating benchmark tuning file $tune_file")
+       mkpath(dirname(tune_file))
        tune!(suite)
        JLD.save(tune_file, "suite", params(suite))
     end
