@@ -16,12 +16,12 @@ benchmarkpkg(pkg, [ref];
              promptoverwrite=true)
 ```
 
-_Arguments:_
+**Arguments**:
 
 * `pkg` is the package to benchmark
 * `ref` is the commit/branch to checkout for benchmarking. If left out, the package will be benchmarked in its current state.
 
-_Keyword arguments:_
+**Keyword arguments**:
 
 * `script` is the script with the benchmarks. Defaults to `PKG/benchmark/benchmarks.jl`
 * `require` is the REQUIRE file containing dependencies needed for the benchmark. Defaults to `PKG/benchmark/REQUIRE`.
@@ -33,11 +33,11 @@ _Keyword arguments:_
 * `promptsave` if set to false, you will prompted to confirm before saving the results.
 * `promptoverwrite` if set to false, will not asked to confirm before overwriting previously saved results for a commit.
 
-_Returns:_
+**Returns:**
 
 A `BenchmarkGroup` object with the results of the benchmark.
 
-_Example invocations:_
+**Example invocations:**
 
 ```julia
 using PkgBenchmark
@@ -66,13 +66,13 @@ judge(pkg, [ref], baseline;
 
 You can call `showall(results)` to see a comparison of all the benchmarks.
 
-Arguments:
+**Arguments**:
 
 - `pkg` is the package to benchmark
 - `ref` optional, the commit to judge. If skipped, use the current state of the package repo.
 - `baseline` is the commit to compare `ref` against.
 
-Keyword arguments:
+**Keyword arguments**:
 
 - `f` - tuple of estimator functions - one each for `from_ref`, `to_ref` respectively
 - `use_saved` - similar tuple of flags, if false will not use saved results

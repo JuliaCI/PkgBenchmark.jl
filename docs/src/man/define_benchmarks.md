@@ -68,5 +68,5 @@ end
 
 ```
 
-    !!! note
-    Running this script directly does not actually run the benchmarks. See the next section._
+!!! note
+    Running this script directly does not actually run the benchmarks. See the next section.
