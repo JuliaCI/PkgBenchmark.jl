@@ -52,3 +52,6 @@ end
     end
     # make sure it doesn't error out
 end
+
+# Build the docs
+include("../docs/make.jl")
