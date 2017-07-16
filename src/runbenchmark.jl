@@ -15,13 +15,21 @@ function benchmark_proc(file, output, tunefile; retune=false, custom_loadpath = 
     compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
     julia_exe = Base.julia_cmd()
     _file, _output, _tunefile, _custom_loadpath = map(escape_string, (file, output, tunefile, custom_loadpath))
+    codecov_option = Base.JLOptions().code_coverage
+    coverage = if codecov_option == 0
+        "none"
+    elseif codecov_option == 1
+        "user"
+    else
+        "all"
+    end
     exec_str = isempty(_custom_loadpath) ? "" : "push!(LOAD_PATH, \"$(_custom_loadpath)\")\n"
     exec_str *=
         """
         using PkgBenchmark
         PkgBenchmark.runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
         """
-    run(`$julia_exe $color $compilecache -e $exec_str`)
+    run(`$julia_exe $color --code-coverage=$coverage $compilecache -e $exec_str`)
 end
 
 function runbenchmark_local(file, output, tunefile, retune)
