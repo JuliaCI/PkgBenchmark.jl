@@ -4,6 +4,11 @@ using Base.Test
 
 import Base.LibGit2: GitRepo
 
+# Need to make the docs before the tests are run because Pkg.resolve will uninstall Documenter
+# when it resolves for the benchmarking REQUIRE since Documenter is only a part of
+# the testing REQUIRE.
+include(joinpath(dirname(@__FILE__), "..", "docs", "make.jl"))
+
 g = BenchmarkGroup()
 
 function test_structure(g)
@@ -52,6 +57,3 @@ end
     end
     # make sure it doesn't error out
 end
-
-# Build the docs
-include(joinpath(dirname(@__FILE__), "..", "docs", "make.jl"))
