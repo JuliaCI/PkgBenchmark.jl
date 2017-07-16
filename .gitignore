@@ -3,4 +3,5 @@
 *.jl.mem
 .*~
 .*.sw?
+docs/build
 benchmark/.tune.jld
