@@ -44,8 +44,8 @@ Contributions are welcome, as are feature requests and suggestions. Please open 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://juliaci.github.io/PkgBenchmark.jl/stable
 
-[travis-img]: https://travis-ci.org/JuliaDocs/PkgBenchmark.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/JuliaDocs/PkgBenchmark.jl
+[travis-img]: https://travis-ci.org/JuliaCI/PkgBenchmark.jl.svg?branch=master
+[travis-url]: https://travis-ci.org/JuliaCI/PkgBenchmark.jl
 
 [pkg-0.5-img]: http://pkg.julialang.org/badges/PkgBenchmark_0.5.svg
 [pkg-0.5-url]: http://pkg.julialang.org/?pkg=PkgBenchmark&ver=0.5
