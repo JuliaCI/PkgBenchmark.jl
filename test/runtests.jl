@@ -54,4 +54,9 @@ end
 end
 
 # Build the docs
+makepath = joinpath(dirname(@__FILE__), "..", "docs", "make.jl")
+@show readdir(joinpath(dirname(@__FILE__), ".."))
+@show readdir(joinpath(dirname(@__FILE__), "..", "docs"))
+@show isfile(makepath)
+
 include(joinpath(dirname(@__FILE__), "..", "docs", "make.jl"))
