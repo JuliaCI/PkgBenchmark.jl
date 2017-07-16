@@ -54,4 +54,4 @@ end
 end
 
 # Build the docs
-include(joinpath(@__DIR__, "..", "docs", "make.jl"))
+include(joinpath(dirname(@__FILE__), "..", "docs", "make.jl"))

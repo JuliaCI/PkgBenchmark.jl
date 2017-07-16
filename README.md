@@ -4,7 +4,7 @@
 
 | **Documentation**                                                               | **PackageEvaluator**                                                                            | **Build Status**                                                                                |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.5-img]][pkg-0.5-url] [![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url]  |
+| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.5-img]][pkg-0.5-url] [![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url] [![Coverage Status][coverage-img]][coverage-url] |
 
 ## Introduction
 
@@ -47,10 +47,12 @@ Contributions are welcome, as are feature requests and suggestions. Please open 
 [travis-img]: https://travis-ci.org/JuliaDocs/PkgBenchmark.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/JuliaDocs/PkgBenchmark.jl
 
-
 [pkg-0.5-img]: http://pkg.julialang.org/badges/PkgBenchmark_0.5.svg
 [pkg-0.5-url]: http://pkg.julialang.org/?pkg=PkgBenchmark&ver=0.5
 [pkg-0.6-img]: http://pkg.julialang.org/badges/PkgBenchmark_0.6.svg
 [pkg-0.6-url]: http://pkg.julialang.org/?pkg=PkgBenchmark&ver=0.6
 
 [issues-url]: https://github.com/JuliaCI/PkgBenchmark.jl/issues
+
+[coverage-img]: https://coveralls.io/repos/github/JuliaCI/PkgBenchmark.jl/badge.svg?branch=master
+[coverage-url]: https://coveralls.io/github/JuliaCI/PkgBenchmark.jl?branch=master
