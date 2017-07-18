@@ -1,14 +1,34 @@
 using BenchmarkTools
-export @benchgroup, @bench, root_group
+export @benchgroup, @bench, register_suite
 
+##################
+# Dict based API #
+##################
+SUITE = nothing
+
+"""
+    register_suite(suite::BenchmarkGroup)
+
+Registers the benchmark suite `suite` with PkgBenchmark so that it is used
+when running [`benchmarkpkg`](@ref).
+"""
+function register_suite(bg::BenchmarkGroup)
+    global SUITE = bg
+end
+
+_reset_suite() = global SUITE = nothing
+_get_suite() = SUITE
+
+###################
+# Macro based API #
+###################
 const _benchmark_stack = Any[BenchmarkGroup()]
 
 _reset_stack() = (empty!(_benchmark_stack); push!(_benchmark_stack, BenchmarkGroup()))
 _top_group() = _benchmark_stack[end]
 _push_group!(g) = push!(_benchmark_stack, g)
 _pop_group!() = pop!(_benchmark_stack)
-
-root_group() = _top_group()
+_root_group() = _top_group()
 
 macro benchgroup(expr...)
     name = expr[1]

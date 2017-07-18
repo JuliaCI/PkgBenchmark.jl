@@ -1,11 +1,14 @@
 # Defining a benchmark suite
 
-## Conventions
 
-- Benchmarks are to be written in `<PKGROOT>/benchmark/benchmarks.jl` and must use the `@benchgroup` and `@bench` macros. These are analogous to `@testset` and `@test` macros, with slightly different syntax.
-- `<PKGROOT>/benchmark/REQUIRE` can contain dependencies needed to run the benchmark suite.
+Benchmarks are to be written in `<PKGROOT>/benchmark/benchmarks.jl` and can be defined in two different ways:
 
-## Writing benchmarks
+* Using the standard dictionary based interface from BenchmarkTools, as documented [here](https://github.com/JuliaCI/BenchmarkTools.jl/blob/master/doc/manual.md#defining-benchmark-suites). Note that the suite need to be registered with PkgBenchmark by calling `register_suite(SUITE)`. An example file using the dictionary based interface can be found [here](https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/benchmark/benchmarks_dict.jl).
+* Using the `@benchgroup` and `@bench` macros. These are analogous to `@testset` and `@test` macros, with slightly different syntax. An example file using the macro based interface can be found [here](https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/benchmark/benchmarks.jl).
+
+`<PKGROOT>/benchmark/REQUIRE` can contain dependencies needed to run the benchmark suite.
+
+## Writing benchmarks using the macro based API
 
 ### `@benchgroup`
 
@@ -67,4 +70,4 @@ end
 ```
 
 !!! note
-    Running this script directly does not actually run the benchmarks. See the next section.
+    Running this script directly does not actually run the benchmarks, see the next section.
