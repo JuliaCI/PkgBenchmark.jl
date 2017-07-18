@@ -75,8 +75,7 @@ defaulttunefile(pkg) =
                 saveresults=true,
                 tunefile=defaulttunefile(pkg),
                 retune=false,
-                promptsave=true,
-                promptoverwrite=true)
+                overwrite=true)
 
 **Arguments**:
 
@@ -89,11 +88,9 @@ defaulttunefile(pkg) =
 * `require` is the REQUIRE file containing dependencies needed for the benchmark. Defaults to `PKG/benchmark/REQUIRE`.
 * `resultsdir` the directory where to file away results. Defaults to `PKG/benchmark/.results`. Provided the repository is not dirty, results generated will be saved in this directory in a file named `<SHA1_of_commit>.jld`. And can be used later by functions such as `judge`. If you choose to, you can save the results manually using `writeresults(file, results)` where `results` is the return value of `benchmarkpkg` function. It can be read back with `readresults(file)`.
 * `saveresults` if set to false, results will not be saved in `resultsdir`.
-* `promptsave` if set to false, you will prompted to confirm before saving the results.
 * `tunefile` file to use for tuning benchmarks, will be created if doesn't exist. Defaults to `PKG/benchmark/.tune.jld`
 * `retune` force a re-tune, saving results to the tune file
-* `promptsave` if set to false, you will prompted to confirm before saving the results.
-* `promptoverwrite` if set to false, will not asked to confirm before overwriting previously saved results for a commit.
+* `overwrite` overwrites the result file if it already exists
 
 **Returns:**
 
@@ -117,9 +114,11 @@ function benchmarkpkg(pkg, ref=nothing;
                       tunefile=defaulttunefile(pkg),
                       retune=false,
                       saveresults=true,
-                      promptsave=true,
-                      promptoverwrite=true,
-                      custom_loadpath="" #= used in tests =#)
+                      overwrite=true,
+                      custom_loadpath="", #= used in tests =#
+                      promptsave=nothing  #= deprecated =#)
+
+    promptsave != nothing && Base.warn_once("the `promptsave` keyword is deprecated and will be removed.")
 
     function do_benchmark()
         !isfile(script) && error("Benchmark script $script not found")
@@ -136,16 +135,25 @@ function benchmarkpkg(pkg, ref=nothing;
 
         if !dirty
             if saveresults
-                tosave = if promptsave
+                tosave = true
+                if promptsave == true
                     print("File results of this run? (commit=$(sha[1:6]), resultsdir=$resultsdir) (Y/n) ")
-                    response = readline() |> strip
-                    response == "" || lowercase(response) == "y"
-                else true end
+                    response = string(readline())
+                    tosave = if response == "" || lowercase(response) == "y"
+                        true
+                    else
+                        false
+                    end
+                end
                 if tosave
                     !isdir(resultsdir) && mkpath(resultsdir)
                     resfile = joinpath(resultsdir, sha*".jld")
-                    writeresults(resfile, res)
-                    info("Results of the benchmark were written to $resfile")
+                    if !isfile(resfile) || overwrite == true
+                        writeresults(resfile, res)
+                        info("Results of the benchmark were written to $resfile")
+                    else
+                        info("Found existing results, no output written")
+                    end
                 end
             end
         else
