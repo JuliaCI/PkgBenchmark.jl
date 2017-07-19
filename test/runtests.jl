@@ -84,8 +84,8 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     resfile = joinpath(tmp, "$id.jld")
 
     # Benchmark dirty repo
-    cp(joinpath(@__DIR__, "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); remove_destination=true)
-    cp(joinpath(@__DIR__, "..", "benchmark", "REQUIRE"), joinpath(testpkg_path, "benchmark", "REQUIRE"))
+    cp(joinpath(dirname(@__FILE__), "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); remove_destination=true)
+    cp(joinpath(dirname(@__FILE__), "..", "benchmark", "REQUIRE"), joinpath(testpkg_path, "benchmark", "REQUIRE"))
     LibGit2.add!(repo, "benchmark/benchmarks.jl")
     LibGit2.add!(repo, "benchmark/REQUIRE")
     @test LibGit2.isdirty(repo)
