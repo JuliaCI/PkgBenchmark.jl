@@ -4,6 +4,9 @@ using Base.Test
 
 import Base.LibGit2: GitRepo
 
+# Build the docs
+include(joinpath(dirname(@__FILE__), "..", "docs", "make.jl"))
+
 g = BenchmarkGroup()
 
 function test_structure(g)
@@ -52,11 +55,3 @@ end
     end
     # make sure it doesn't error out
 end
-
-# Build the docs
-makepath = joinpath(dirname(@__FILE__), "..", "docs", "make.jl")
-@show readdir(joinpath(dirname(@__FILE__), ".."))
-@show readdir(joinpath(dirname(@__FILE__), "..", "docs"))
-@show isfile(makepath)
-
-include(joinpath(dirname(@__FILE__), "..", "docs", "make.jl"))
