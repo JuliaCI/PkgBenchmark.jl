@@ -5,17 +5,18 @@ import Base.LibGit2: GitRepo, Oid, revparseid
 using FileIO
 using JLD
 
-function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false)
-    benchmark_proc(file, output, tunefile, retune=retune)
+function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false, custom_loadpath = nothing)
+    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath = custom_loadpath)
     readresults(output)
 end
 
-function benchmark_proc(file, output, tunefile; retune=false)
+function benchmark_proc(file, output, tunefile; retune=false, custom_loadpath = "")
     color = Base.have_color? "--color=yes" : "--color=no"
     compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
     julia_exe = Base.julia_cmd()
-    _file, _output, _tunefile = map(escape_string, (file, output, tunefile))
-    exec_str =
+    _file, _output, _tunefile, _custom_loadpath = map(escape_string, (file, output, tunefile, custom_loadpath))
+    exec_str = isempty(_custom_loadpath) ? "" : "push!(LOAD_PATH, \"$(_custom_loadpath)\")\n"
+    exec_str *=
         """
         using PkgBenchmark
         PkgBenchmark.runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
@@ -102,7 +103,8 @@ function benchmarkpkg(pkg, ref=nothing;
                       retune=false,
                       saveresults=true,
                       promptsave=true,
-                      promptoverwrite=true)
+                      promptoverwrite=true,
+                      custom_loadpath = nothing)
 
     function do_benchmark()
         !isfile(script) && error("Benchmark script $script not found")
@@ -110,7 +112,7 @@ function benchmarkpkg(pkg, ref=nothing;
         res = with_reqs(require, ()->info("Resolving dependencies for benchmark")) do
             withtemp(tempname()) do f
                 info("Running benchmarks...")
-                runbenchmark(script, f, tunefile; retune=retune)
+                runbenchmark(script, f, tunefile; retune=retune, custom_loadpath = custom_loadpath)
             end
         end
 
