@@ -31,10 +31,17 @@ function test_structure(g)
     @test g["trigonometry"]["circular"] |> keys |> collect |> Set == _keys
 end
 
+
 @testset "structure" begin
-    include(Pkg.dir("PkgBenchmark", "benchmark", "benchmarks.jl"))
-    g = PkgBenchmark._top_group()
-    test_structure(g)
+    @testset "macro" begin
+        include(Pkg.dir("PkgBenchmark", "benchmark", "benchmarks.jl"))
+        test_structure(PkgBenchmark._top_group())
+    end
+
+    @testset "dict" begin
+        include(Pkg.dir("PkgBenchmark", "benchmark", "benchmarks_dict.jl"))
+        test_structure(PkgBenchmark._get_suite())
+    end
 end
 
 

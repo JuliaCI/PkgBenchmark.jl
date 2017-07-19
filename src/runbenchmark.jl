@@ -34,8 +34,15 @@ end
 
 function runbenchmark_local(file, output, tunefile, retune)
     _reset_stack()
+    _reset_suite()
+
     include(file)
-    suite = root_group()
+
+    suite = if _get_suite() != nothing
+        _get_suite()
+    else
+        _root_group()
+    end
     cached_tune(tunefile, suite, retune)
     results = run(suite)
     writeresults(output, results)
