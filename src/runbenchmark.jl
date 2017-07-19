@@ -6,11 +6,11 @@ using FileIO
 using JLD
 
 function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false, custom_loadpath = nothing)
-    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath = custom_loadpath)
+    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath="")
     readresults(output)
 end
 
-function benchmark_proc(file, output, tunefile; retune=false, custom_loadpath = "")
+function benchmark_proc(file, output, tunefile; retune=false, custom_loadpath="")
     color = Base.have_color? "--color=yes" : "--color=no"
     compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
     julia_exe = Base.julia_cmd()
@@ -119,7 +119,7 @@ function benchmarkpkg(pkg, ref=nothing;
                       saveresults=true,
                       promptsave=true,
                       promptoverwrite=true,
-                      custom_loadpath = nothing)
+                      custom_loadpath="" #= used in tests =#)
 
     function do_benchmark()
         !isfile(script) && error("Benchmark script $script not found")
