@@ -1,6 +1,3 @@
-using BenchmarkTools
-export @benchgroup, @bench, register_suite
-
 ##################
 # Dict based API #
 ##################
