@@ -6,7 +6,7 @@ using FileIO
 using JLD
 
 function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false, custom_loadpath = nothing)
-    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath="")
+    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath=custom_loadpath)
     readresults(output)
 end
 
