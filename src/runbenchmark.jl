@@ -1,12 +1,5 @@
-export runbenchmark, benchmarkpkg
-
-import Base.LibGit2: GitRepo, Oid, revparseid
-
-using FileIO
-using JLD
-
 function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false, custom_loadpath = nothing)
-    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath="")
+    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath=custom_loadpath)
     readresults(output)
 end
 
@@ -130,7 +123,7 @@ function benchmarkpkg(pkg, ref=nothing;
             end
         end
 
-        dirty = LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg)))
+        dirty = LibGit2.with(LibGit2.isdirty, LibGit2.GitRepo(Pkg.dir(pkg)))
         sha = shastring(Pkg.dir(pkg), "HEAD")
 
         if !dirty
@@ -164,12 +157,12 @@ function benchmarkpkg(pkg, ref=nothing;
     end
 
     if ref !== nothing
-        if LibGit2.with(LibGit2.isdirty, GitRepo(Pkg.dir(pkg)))
+        if LibGit2.with(LibGit2.isdirty, LibGit2.GitRepo(Pkg.dir(pkg)))
             error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
                   "changes before benchmarking a specific commit")
         end
 
-        return withcommit(do_benchmark, GitRepo(Pkg.dir(pkg)), ref)
+        return withcommit(do_benchmark, LibGit2.GitRepo(Pkg.dir(pkg)), ref)
     else
         # benchmark on the current state of the repo
         do_benchmark()
@@ -194,8 +187,8 @@ function withcommit(f, repo, commit)
     end
 end
 
-shastring(r::GitRepo, refname) = string(revparseid(r, refname))
-shastring(dir::AbstractString, refname) = LibGit2.with(r->shastring(r, refname), GitRepo(dir))
+shastring(r::LibGit2.GitRepo, refname) = string(LibGit2.revparseid(r, refname))
+shastring(dir::AbstractString, refname) = LibGit2.with(r->shastring(r, refname), LibGit2.GitRepo(dir))
 
 function writeresults(file, res)
     save(File(format"JLD", file), "time", time(), "trials", res)

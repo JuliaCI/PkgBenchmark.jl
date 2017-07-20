@@ -116,7 +116,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     LibGit2.commit(repo, "dummy commit"; author=test_sig, committer=test_sig)
 
     @testset "withresults" begin
-        withresults(TEST_PACKAGE_NAME, ["HEAD~", "HEAD"], custom_loadpath=old_pkgdir) do res
+        PkgBenchmark.withresults(TEST_PACKAGE_NAME, ["HEAD~", "HEAD"], custom_loadpath=old_pkgdir) do res
             @test length(res) == 2
             a, b = res
             test_structure(a)

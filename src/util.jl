@@ -1,6 +1,3 @@
-
-import Base.Pkg.Entry: Available
-
 """
 Run a function after loading a REQUIREs file.
 Clean up afterwards
