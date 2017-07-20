@@ -1,5 +1,3 @@
-export judge, withresults
-
 function _cached(pkg, ref; resultsdir=defaultresultsdir(pkg), kws...)
     if ref !== nothing
         sha = shastring(Pkg.dir(pkg), ref)

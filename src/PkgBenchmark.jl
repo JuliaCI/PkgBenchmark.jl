@@ -2,9 +2,11 @@ __precompile__()
 
 module PkgBenchmark
 
-export runbenchmark, bisect
-
 using BenchmarkTools
+using FileIO
+using JLD
+
+export benchmarkpkg, judge, @benchgroup, @bench, register_suite
 
 include("util.jl")
 include("define_benchmarks.jl")
