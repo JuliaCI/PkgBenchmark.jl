@@ -77,12 +77,12 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
         # Test we are on a branch and run benchmark on a commit that we end up back on the branch
         LibGit2.branch!(repo, "PR")
         LibGit2.branch!(repo, "master")
-        PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "PR"; custom_loadpath=old_pkgdir, promptsave=false)
+        PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "PR"; custom_loadpath=old_pkgdir)
         @test LibGit2.branch(repo) == "master"
 
         # Test we are on a commit and run benchmark on another commit and end up on the commit
         LibGit2.checkout!(repo, string(commit_master))
-        PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "PR"; custom_loadpath=old_pkgdir, promptsave=false)
+        PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "PR"; custom_loadpath=old_pkgdir)
         @test LibGit2.revparseid(repo, "HEAD") == commit_master
     end
 
@@ -105,7 +105,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     commitid = LibGit2.commit(repo, "commiting full benchmarks and REQUIRE"; author=test_sig, committer=test_sig)
     resfile = joinpath(tmp, "$(string(commitid)).jld")
     @test !LibGit2.isdirty(repo)
-    results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir, promptsave=false, resultsdir=tmp)
+    results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir, resultsdir=tmp)
     test_structure(results)
     @test isfile(resfile)
     @test PkgBenchmark.readresults(resfile) == results
@@ -116,7 +116,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     LibGit2.commit(repo, "dummy commit"; author=test_sig, committer=test_sig)
 
     @testset "withresults" begin
-        PkgBenchmark.withresults(TEST_PACKAGE_NAME, ["HEAD~", "HEAD"], custom_loadpath=old_pkgdir, promptsave=false) do res
+        PkgBenchmark.withresults(TEST_PACKAGE_NAME, ["HEAD~", "HEAD"], custom_loadpath=old_pkgdir) do res
             @test length(res) == 2
             a, b = res
             test_structure(a)
