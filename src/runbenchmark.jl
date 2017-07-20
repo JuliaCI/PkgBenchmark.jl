@@ -4,6 +4,51 @@ import Base.LibGit2: GitRepo, Oid, revparseid
 
 using FileIO
 using JLD
+using ProgressMeter
+
+function _tune!(group::BenchmarkTools.BenchmarkGroup; verbose::Bool = false, root = true,
+                prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Tuning: "), hierarchy = [], kwargs...)
+    BenchmarkTools.gcscrub() # run GC before running group, even if individual benchmarks don't manually GC
+    i = 1
+    for id in keys(group)
+        _tune!(group[id]; verbose = verbose, prog = prog, hierarchy = push!(copy(hierarchy), (repr(id), i, length(keys(group)))), kwargs...)
+        i += 1
+    end
+    return group
+end
+
+function _tune!(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.params;
+               prog = nothing, verbose::Bool = false, pad = "", hierarchy = [], kwargs...)
+    BenchmarkTools.warmup(b, false)
+    estimate = ceil(Int, minimum(BenchmarkTools.lineartrial(b, p; kwargs...)))
+    b.params.evals = BenchmarkTools.guessevals(estimate)
+    if prog != nothing
+        indent = 0
+        ProgressMeter.next!(prog; showvalues = [map(id -> ("  "^(indent += 1) * "[$(id[2])/$(id[3])]", id[1]), hierarchy)...])
+    end
+    return b
+end
+
+function _run(group::BenchmarkTools.BenchmarkGroup, args...;
+              prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Benchmarking: "), hierarchy = [], kwargs...)
+    result = similar(group)
+    BenchmarkTools.gcscrub() # run GC before running group, even if individual benchmarks don't manually GC
+    i = 1
+    for id in keys(group)
+        result[id] = _run(group[id], args...; prog = prog, hierarchy = push!(copy(hierarchy), (repr(id), i, length(keys(group)))), kwargs...)
+        i += 1
+    end
+    return result
+end
+
+function _run(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.params; 
+                   prog = nothing, verbose::Bool = false, pad = "", hierarchy = [], kwargs...)
+    BenchmarkTools.run_result(b, p; kwargs...)[1]
+    if prog != nothing
+        indent = 0
+        ProgressMeter.next!(prog; showvalues = [map(id -> ("  "^(indent += 1) * "[$(id[2])/$(id[3])]", id[1]), hierarchy)...])
+    end
+end
 
 function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false, custom_loadpath = nothing)
     benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath=custom_loadpath)
@@ -44,7 +89,7 @@ function runbenchmark_local(file, output, tunefile, retune)
         _root_group()
     end
     cached_tune(tunefile, suite, retune)
-    results = run(suite)
+    results = _run(suite)
     writeresults(output, results)
     results
 end
@@ -201,12 +246,12 @@ end
 
 function cached_tune(tune_file, suite, force)
     if isfile(tune_file) && !force
-       println("Using benchmark tuning data in $tune_file")
+       info("Using benchmark tuning data in $tune_file")
        loadparams!(suite, JLD.load(tune_file, "suite"), :evals, :samples)
     else
-       println("Creating benchmark tuning file $tune_file")
        mkpath(dirname(tune_file))
-       tune!(suite)
+       _tune!(suite)
+       info("Tuning file saved to $tune_file")
        JLD.save(tune_file, "suite", params(suite))
     end
     suite
