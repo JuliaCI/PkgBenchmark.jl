@@ -42,7 +42,9 @@ end
 
     @testset "dict" begin
         results = benchmarkpkg("PkgBenchmark", script = joinpath(BENCHMARK_DIR, "benchmarks_dict.jl"))
-        test_structure(results)
+        test_structure(PkgBenchmark.benchmarkgroup(results))
+        @test PkgBenchmark.name(results) == "PkgBenchmark"
+        @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
     end
 end
 
@@ -100,7 +102,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     @test LibGit2.isdirty(repo)
     @test_throws ErrorException PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir)
     results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME; custom_loadpath=old_pkgdir, resultsdir=tmp)
-    test_structure(results)
+    test_structure(PkgBenchmark.benchmarkgroup(results))
     @test !isfile(resfile)
 
     # Commit and benchmark non dirty repo
@@ -108,7 +110,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     resfile = joinpath(tmp, "$(string(commitid)).jld")
     @test !LibGit2.isdirty(repo)
     results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir, resultsdir=tmp)
-    test_structure(results)
+    test_structure(PkgBenchmark.benchmarkgroup(results))
     @test isfile(resfile)
     @test readresults(resfile) == results
 
