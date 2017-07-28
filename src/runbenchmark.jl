@@ -1,9 +1,4 @@
 function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false, custom_loadpath = nothing)
-    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath=custom_loadpath)
-    readresults(output)
-end
-
-function benchmark_proc(file, output, tunefile; retune=false, custom_loadpath="")
     color = Base.have_color? "--color=yes" : "--color=no"
     compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
     julia_exe = Base.julia_cmd()
@@ -23,6 +18,7 @@ function benchmark_proc(file, output, tunefile; retune=false, custom_loadpath=""
         PkgBenchmark.runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
         """
     run(`$julia_exe $color --code-coverage=$coverage $compilecache -e $exec_str`)
+    readresults(output)
 end
 
 function runbenchmark_local(file, output, tunefile, retune)
@@ -170,7 +166,6 @@ function benchmarkpkg(pkg, ref=nothing;
     end
 
 end
-
 
 function writeresults(file, res)
     save(File(format"JLD", file), "time", time(), "trials", res)
