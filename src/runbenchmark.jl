@@ -1,61 +1,9 @@
-function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false, custom_loadpath = nothing)
-    benchmark_proc(file, output, tunefile, retune=retune, custom_loadpath=custom_loadpath)
-    readresults(output)
-end
-
-function benchmark_proc(file, output, tunefile; retune=false, custom_loadpath="")
-    color = Base.have_color? "--color=yes" : "--color=no"
-    compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
-    julia_exe = Base.julia_cmd()
-    _file, _output, _tunefile, _custom_loadpath = map(escape_string, (file, output, tunefile, custom_loadpath))
-    codecov_option = Base.JLOptions().code_coverage
-    coverage = if codecov_option == 0
-        "none"
-    elseif codecov_option == 1
-        "user"
-    else
-        "all"
-    end
-    exec_str = isempty(_custom_loadpath) ? "" : "push!(LOAD_PATH, \"$(_custom_loadpath)\")\n"
-    exec_str *=
-        """
-        using PkgBenchmark
-        PkgBenchmark.runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
-        """
-    run(`$julia_exe $color --code-coverage=$coverage $compilecache -e $exec_str`)
-end
-
-function runbenchmark_local(file, output, tunefile, retune)
-    _reset_stack()
-    include(file)
-    suite = if isdefined(Main, :SUITE)
-        Main.SUITE
-    else
-        _root_group()
-    end
-    cached_tune(tunefile, suite, retune)
-    results = run(suite)
-    writeresults(output, results)
-    results
-end
-
-function withtemp(f, file)
-    try f(file)
-    catch err
-        rethrow()
-    finally rm(file) end
-end
-
 # Package benchmarking API
 
-defaultscript(pkg) =
-    Pkg.dir(pkg, "benchmark", "benchmarks.jl")
-defaultresultsdir(pkg) =
-    Pkg.dir(".benchmarks", pkg, "results")
-defaultrequire(pkg) =
-    Pkg.dir(pkg, "benchmark", "REQUIRE")
-defaulttunefile(pkg) =
-    Pkg.dir(".benchmarks", pkg, ".tune.jld")
+defaultscript(pkg)     = Pkg.dir(pkg, "benchmark", "benchmarks.jl")
+defaultrequire(pkg)    = Pkg.dir(pkg, "benchmark", "REQUIRE")
+defaultresultsdir(pkg) = Pkg.dir(".benchmarks", pkg, "results")
+defaulttunefile(pkg)   = Pkg.dir(".benchmarks", pkg, ".tune.jld")
 
 """
     benchmarkpkg(pkg, [ref];
@@ -149,7 +97,6 @@ function benchmarkpkg(pkg, ref=nothing;
         else
             warn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
         end
-
         res
     end
 
@@ -158,34 +105,64 @@ function benchmarkpkg(pkg, ref=nothing;
             error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
                   "changes before benchmarking a specific commit")
         end
-
         return withcommit(do_benchmark, LibGit2.GitRepo(Pkg.dir(pkg)), ref)
     else
         # benchmark on the current state of the repo
         do_benchmark()
     end
-
 end
 
-function withcommit(f, repo, commit)
-    LibGit2.transact(repo) do r
-        branch = try LibGit2.branch(r) catch err; nothing end
-        prev = shastring(r, "HEAD")
-        try
-            LibGit2.checkout!(r, shastring(r,commit))
-            f()
-        catch err
-            rethrow(err)
-        finally
-            if branch !== nothing
-                LibGit2.branch!(r, branch)
-            end
-        end
+function runbenchmark(file::AbstractString, output::AbstractString, tunefile::AbstractString; retune=false, custom_loadpath = nothing)
+    color = Base.have_color? "--color=yes" : "--color=no"
+    compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
+    julia_exe = Base.julia_cmd()
+    _file, _output, _tunefile, _custom_loadpath = map(escape_string, (file, output, tunefile, custom_loadpath))
+    codecov_option = Base.JLOptions().code_coverage
+    coverage = if codecov_option == 0
+        "none"
+    elseif codecov_option == 1
+        "user"
+    else
+        "all"
     end
+    exec_str = isempty(_custom_loadpath) ? "" : "push!(LOAD_PATH, \"$(_custom_loadpath)\")\n"
+    exec_str *=
+        """
+        using PkgBenchmark
+        PkgBenchmark.runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
+        """
+    run(`$julia_exe $color --code-coverage=$coverage $compilecache -e $exec_str`)
+    readresults(output)
 end
 
-shastring(r::LibGit2.GitRepo, refname) = string(LibGit2.revparseid(r, refname))
-shastring(dir::AbstractString, refname) = LibGit2.with(r->shastring(r, refname), LibGit2.GitRepo(dir))
+function runbenchmark_local(file, output, tunefile, retune)
+    # Loading
+    _reset_stack()
+    include(file)
+    suite = if isdefined(Main, :SUITE)
+        Main.SUITE
+    else
+        _root_group()
+    end
+
+    # Tuning
+    if isfile(tunefile) && !retune
+        println("Using benchmark tuning data in $tunefile")
+        loadparams!(suite, JLD.load(tunefile, "suite"), :evals, :samples)
+    else
+        println("Creating benchmark tuning file $tunefile")
+        mkpath(dirname(tunefile))
+        tune!(suite)
+        JLD.save(tunefile, "suite", params(suite))
+    end
+
+    # Running
+    results = run(suite)
+
+    # Output
+    writeresults(output, results)
+    results
+end
 
 function writeresults(file, res)
     save(File(format"JLD", file), "time", time(), "trials", res)
@@ -195,17 +172,4 @@ function readresults(file)
     JLD.jldopen(file,"r") do f
         read(f, "trials")
     end
-end
-
-function cached_tune(tune_file, suite, force)
-    if isfile(tune_file) && !force
-       println("Using benchmark tuning data in $tune_file")
-       loadparams!(suite, JLD.load(tune_file, "suite"), :evals, :samples)
-    else
-       println("Creating benchmark tuning file $tune_file")
-       mkpath(dirname(tune_file))
-       tune!(suite)
-       JLD.save(tune_file, "suite", params(suite))
-    end
-    suite
 end
