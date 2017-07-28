@@ -54,23 +54,12 @@ function runbenchmark_local(file, output, tunefile, retune)
     results
 end
 
-function withtemp(f, file)
-    try f(file)
-    catch err
-        rethrow()
-    finally rm(file) end
-end
-
 # Package benchmarking API
 
-defaultscript(pkg) =
-    Pkg.dir(pkg, "benchmark", "benchmarks.jl")
-defaultresultsdir(pkg) =
-    Pkg.dir(".benchmarks", pkg, "results")
-defaultrequire(pkg) =
-    Pkg.dir(pkg, "benchmark", "REQUIRE")
-defaulttunefile(pkg) =
-    Pkg.dir(".benchmarks", pkg, ".tune.jld")
+defaultscript(pkg)     = Pkg.dir(pkg, "benchmark", "benchmarks.jl")
+defaultrequire(pkg)    = Pkg.dir(pkg, "benchmark", "REQUIRE")
+defaultresultsdir(pkg) = Pkg.dir(".benchmarks", pkg, "results")
+defaulttunefile(pkg)   = Pkg.dir(".benchmarks", pkg, ".tune.jld")
 
 """
     benchmarkpkg(pkg, [ref];
@@ -182,25 +171,6 @@ function benchmarkpkg(pkg, ref=nothing;
 
 end
 
-function withcommit(f, repo, commit)
-    LibGit2.transact(repo) do r
-        branch = try LibGit2.branch(r) catch err; nothing end
-        prev = shastring(r, "HEAD")
-        try
-            LibGit2.checkout!(r, shastring(r,commit))
-            f()
-        catch err
-            rethrow(err)
-        finally
-            if branch !== nothing
-                LibGit2.branch!(r, branch)
-            end
-        end
-    end
-end
-
-shastring(r::LibGit2.GitRepo, refname) = string(LibGit2.revparseid(r, refname))
-shastring(dir::AbstractString, refname) = LibGit2.with(r->shastring(r, refname), LibGit2.GitRepo(dir))
 
 function writeresults(file, res)
     save(File(format"JLD", file), "time", time(), "trials", res)
