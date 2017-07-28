@@ -26,6 +26,7 @@ function benchmark_proc(file, output, tunefile; retune=false, custom_loadpath=""
 end
 
 function runbenchmark_local(file, output, tunefile, retune)
+    # Loading
     _reset_stack()
     include(file)
     suite = if isdefined(Main, :SUITE)
@@ -33,8 +34,22 @@ function runbenchmark_local(file, output, tunefile, retune)
     else
         _root_group()
     end
-    cached_tune(tunefile, suite, retune)
+
+    # Tuning
+    if isfile(tune_file) && !retune
+        println("Using benchmark tuning data in $tune_file")
+        loadparams!(suite, JLD.load(tune_file, "suite"), :evals, :samples)
+    else
+        println("Creating benchmark tuning file $tune_file")
+        mkpath(dirname(tune_file))
+        tune!(suite)
+        JLD.save(tune_file, "suite", params(suite))
+    end
+
+    # Running
     results = run(suite)
+
+    # Output
     writeresults(output, results)
     results
 end
@@ -195,17 +210,4 @@ function readresults(file)
     JLD.jldopen(file,"r") do f
         read(f, "trials")
     end
-end
-
-function cached_tune(tune_file, suite, force)
-    if isfile(tune_file) && !force
-       println("Using benchmark tuning data in $tune_file")
-       loadparams!(suite, JLD.load(tune_file, "suite"), :evals, :samples)
-    else
-       println("Creating benchmark tuning file $tune_file")
-       mkpath(dirname(tune_file))
-       tune!(suite)
-       JLD.save(tune_file, "suite", params(suite))
-    end
-    suite
 end
