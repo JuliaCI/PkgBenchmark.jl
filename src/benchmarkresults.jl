@@ -9,7 +9,7 @@ The following (unexported) methods are defined on a `BenchmarkResults` (written 
    contaning the results of the benchmark.
 * `date(results)::DateTime` - the time when the benchmarks were executed
 """
-struct BenchmarkResults
+immutable BenchmarkResults
     name::String
     commit::String
     benchmarkgroup::BenchmarkGroup
