@@ -32,7 +32,7 @@ defaulttunefile(pkg)   = Pkg.dir(".benchmarks", pkg, ".tune.jld")
 
 **Returns:**
 
-A `BenchmarkGroup` object with the results of the benchmark.
+A [`BenchmarkResults`](@ref) object with the results of the benchmark.
 
 **Example invocations:**
 
@@ -61,7 +61,7 @@ function benchmarkpkg(pkg, ref=nothing;
     function do_benchmark()
         !isfile(script) && error("Benchmark script $script not found")
 
-        res = with_reqs(require, ()->info("Resolving dependencies for benchmark")) do
+        resgroup = with_reqs(require, ()->info("Resolving dependencies for benchmark")) do
             withtemp(tempname()) do f
                 info("Running benchmarks...")
                 runbenchmark(script, f, tunefile; retune=retune, custom_loadpath = custom_loadpath)
@@ -70,6 +70,9 @@ function benchmarkpkg(pkg, ref=nothing;
 
         dirty = LibGit2.with(LibGit2.isdirty, LibGit2.GitRepo(Pkg.dir(pkg)))
         sha = shastring(Pkg.dir(pkg), "HEAD")
+
+        results = BenchmarkResults(pkg, dirty? "dirty" : sha, resgroup, now())
+
 
         if !dirty
             if saveresults
@@ -85,9 +88,9 @@ function benchmarkpkg(pkg, ref=nothing;
                 end
                 if tosave
                     !isdir(resultsdir) && mkpath(resultsdir)
-                    resfile = joinpath(resultsdir, sha*".jld")
+                    resfile = joinpath(resultsdir, sha * ".jld")
                     if !isfile(resfile) || overwrite == true
-                        writeresults(resfile, res)
+                        writeresults(resfile, results)
                         info("Results of the benchmark were written to $resfile")
                     else
                         info("Found existing results, no output written")
@@ -97,7 +100,7 @@ function benchmarkpkg(pkg, ref=nothing;
         else
             warn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
         end
-        res
+        return results
     end
 
     if ref !== nothing
@@ -164,12 +167,5 @@ function runbenchmark_local(file, output, tunefile, retune)
     results
 end
 
-function writeresults(file, res)
-    save(File(format"JLD", file), "time", time(), "trials", res)
-end
-
-function readresults(file)
-    JLD.jldopen(file,"r") do f
-        read(f, "trials")
-    end
-end
+writeresults(file, results) = save(File(format"JLD", file), "results", results)
+readresults(file)  = load(File(format"JLD", file))["results"]

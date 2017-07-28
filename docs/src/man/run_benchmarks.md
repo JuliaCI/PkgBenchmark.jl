@@ -6,6 +6,12 @@ Use `benchmarkpkg` to run benchmarks written using the convention above.
 benchmarkpkg
 ```
 
+The results of a benchmark is returned as a `BenchmarkResult`
+
+```@docs
+PkgBenchmark.BenchmarkResults
+```
+
 ## Comparing commits
 
 You can use `judge` to compare benchmark results of two versions of the package.
