@@ -27,12 +27,9 @@ end
 
 function runbenchmark_local(file, output, tunefile, retune)
     _reset_stack()
-    _reset_suite()
-
     include(file)
-
-    suite = if _get_suite() != nothing
-        _get_suite()
+    suite = if isdefined(Main, :SUITE)
+        Main.SUITE
     else
         _root_group()
     end
