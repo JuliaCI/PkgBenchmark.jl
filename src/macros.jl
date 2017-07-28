@@ -1,21 +1,3 @@
-##################
-# Dict based API #
-##################
-SUITE = nothing
-
-"""
-    register_suite(suite::BenchmarkGroup)
-
-Registers the benchmark suite `suite` with PkgBenchmark so that it is used
-when running [`benchmarkpkg`](@ref).
-"""
-function register_suite(bg::BenchmarkGroup)
-    global SUITE = bg
-end
-
-_reset_suite() = global SUITE = nothing
-_get_suite() = SUITE
-
 ###################
 # Macro based API #
 ###################

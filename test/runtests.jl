@@ -2,6 +2,8 @@ using PkgBenchmark
 using BenchmarkTools
 using Base.Test
 
+const BENCHMARK_DIR = joinpath(dirname(@__FILE__), "..", "benchmark")
+
 function temp_pkg_dir(fn::Function; tmp_dir=joinpath(tempdir(), randstring()),
         remove_tmp_dir::Bool=true, initialize::Bool=true)
     # Used in tests below to set up and tear down a sandboxed package directory
@@ -34,13 +36,13 @@ end
 
 @testset "structure" begin
     @testset "macro" begin
-        include(Pkg.dir("PkgBenchmark", "benchmark", "benchmarks.jl"))
+        include(joinpath(BENCHMARK_DIR, "benchmarks.jl"))
         test_structure(PkgBenchmark._top_group())
     end
 
     @testset "dict" begin
-        include(Pkg.dir("PkgBenchmark", "benchmark", "benchmarks_dict.jl"))
-        test_structure(PkgBenchmark._get_suite())
+        results = benchmarkpkg("PkgBenchmark", script = joinpath(BENCHMARK_DIR, "benchmarks_dict.jl"))
+        test_structure(results)
     end
 end
 
@@ -108,7 +110,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir, resultsdir=tmp)
     test_structure(results)
     @test isfile(resfile)
-    @test PkgBenchmark.readresults(resfile) == results
+    @test readresults(resfile) == results
 
     # Make a dummy commit and test comparing HEAD and HEAD~
     touch(joinpath(testpkg_path, "dummy"))

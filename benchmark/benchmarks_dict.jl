@@ -1,4 +1,3 @@
-using PkgBenchmark
 using BenchmarkTools
 using UnicodePlots
 
@@ -25,5 +24,3 @@ for f in (sin, cos, tan)
         SUITE["trigonometry"]["hyperbolic"][string(f), x] = @benchmarkable $(f)($x)
     end
 end
-
-register_suite(SUITE)
