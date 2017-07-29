@@ -119,13 +119,10 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     LibGit2.add!(repo, "dummy")
     LibGit2.commit(repo, "dummy commit"; author=test_sig, committer=test_sig)
 
-    @testset "withresults" begin
-        PkgBenchmark.withresults(TEST_PACKAGE_NAME, ["HEAD~", "HEAD"], custom_loadpath=old_pkgdir) do res
-            @test length(res) == 2
-            a, b = res
-            test_structure(a)
-            test_structure(b)
-            test_structure(judge(minimum(a), minimum(b)))
-        end
+    @testset "judging" begin
+        judgement = judge(TEST_PACKAGE_NAME, "HEAD~", "HEAD", custom_loadpath=old_pkgdir)
+        test_structure(judgement)
+        judgement = judge(TEST_PACKAGE_NAME, "HEAD", custom_loadpath=old_pkgdir)
+        test_structure(judgement)
     end
 end

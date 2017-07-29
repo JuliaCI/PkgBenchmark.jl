@@ -1,58 +1,50 @@
-
-function _cached(pkg, ref; resultsdir=defaultresultsdir(pkg), kws...)
-    if ref !== nothing
-        sha = shastring(Pkg.dir(pkg), ref)
-        file = joinpath(resultsdir, sha*".jld")
-        if isfile(file)
-            info("Reading results for $(sha[1:6]) from $resultsdir")
-            return benchmarkgroup(readresults(file))
-        end
-    end
-
-    benchmarkgroup(benchmarkpkg(pkg, ref;resultsdir=resultsdir, kws...))
-end
-
-_repeat(x, n) = !isa(n, AbstractArray) && [x for _ in 1:n]
-_repeat(x::AbstractArray, n) = x
-
-function withresults(f::Function, pkg::String, refs;
-                     use_saved=trues(length(refs)), kwargs...)
-
-    use_saved = _repeat(use_saved, length(refs))
-    [s ? _cached(pkg, r; kwargs...) : benchmarkgroup(benchmarkpkg(pkg, r; kwargs...))
-        for (r,s) in zip(refs, use_saved)] |> f
-end
-
 """
     judge(pkg, [ref], baseline;
-        f=(minimum, minimum),
-        usesaved=(true, true),
-        script=defaultscript(pkg),
-        require=defaultrequire(pkg),
-        resultsdir=defaultresultsdir(pkg),
-        saveresults=true,
-        promptsave=true,
-        promptoverwrite=true)
+        f=minimum,
+        usesaved=true,
+        judgekwargs::Dict{Symbol, Any} = Dict(),
+        kwargs...)
 
 You can call `showall(results)` to see a comparison of all the benchmarks.
 
 **Arguments**:
 
-- `pkg` is the package to benchmark
-- `ref` optional, the commit to judge. If skipped, use the current state of the package repo.
-- `baseline` is the commit to compare `ref` against.
+- `pkg` - The package to benchmark.
+- `ref` - The commit to judge. If skipped, use the current state of the package repo.
+- `baseline` - The commit to compare `ref` against.
 
 **Keyword arguments**:
 
-- `f` - tuple of estimator functions - one each for `from_ref`, `to_ref` respectively
-- `use_saved` - similar tuple of flags, if false will not use saved results
-- for description of other keyword arguments, see [`benchmarkpkg`](@ref)
+- `f` - Estimator function to use in the [judging](https://github.com/JuliaCI/BenchmarkTools.jl/blob/master/doc/manual.md#trialratio-and-trialjudgement).
+- `use_saved::Union{Bool, Tuple{Bool, Bool}}` - If given as a `Bool`, determines if previous saved benchmarks are used for both the `ref` and `baseline`.
+   If given as a tuple of `Bool`s, the elements in the tuple are applied to `ref` and `baseline` individually.
+- `judgekwargs::Dict{Symbol, Any}` - keyword arguments to pass to the `judge` function in BenchmarkTools
+- if saved results are not used or found, the rest of the keyword arguments `kwargs` are passed to [`benchmarkpkg`](@ref)
 """
-function BenchmarkTools.judge(pkg::String, ref1::Union{String,Void}, ref2::String; f=minimum, judgekwargs=Dict(), kwargs...)
-    fs = _repeat(f, 2)
-    withresults(rs->judge(map((f,x)->f(x), fs, rs)...; judgekwargs...), pkg, (ref1, ref2); kwargs...)
+function BenchmarkTools.judge(pkg::String, ref::Union{String,Void}, baseline::String;
+                              resultsdir=defaultresultsdir(pkg), use_saved::Union{Bool, Tuple{Bool, Bool}}=true,
+                              f=minimum, judgekwargs=Dict(), kwargs...)
+
+    use_saved_ref, use_saved_base = (typeof(use_saved) == Tuple{Bool, Bool}) ? use_saved : (use_saved, use_saved)
+
+    function cached(target, _use_saved)
+        if target !== nothing && _use_saved
+            sha = shastring(Pkg.dir(pkg), target)
+            file = joinpath(resultsdir, sha*".jld")
+            if isfile(file)
+                info("Reading results for $(sha[1:6]) from $resultsdir")
+                return benchmarkgroup(readresults(file))
+            end
+        end
+        return benchmarkgroup(benchmarkpkg(pkg, ref; resultsdir=resultsdir, kwargs...))
+    end
+
+    group_ref = cached(ref, use_saved_ref)
+    group_baseline = cached(baseline, use_saved_base)
+
+    return judge(f(group_ref), f(group_baseline); judgekwargs...)
 end
 
-function BenchmarkTools.judge(pkg::String, ref2::String; kwargs...)
-    judge(pkg, nothing, ref2; kwargs...)
+function BenchmarkTools.judge(pkg::String, baseline::String; kwargs...)
+    judge(pkg, nothing, baseline; kwargs...)
 end
