@@ -6,7 +6,7 @@ using BenchmarkTools
 using FileIO
 using JLD
 
-export benchmarkpkg, judge, @benchgroup, @bench, writeresults, readresults
+export benchmarkpkg, judge, @benchgroup, @bench, writeresults, readresults, export_markdown
 
 include("util.jl")
 include("macros.jl")

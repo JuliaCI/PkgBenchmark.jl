@@ -45,10 +45,13 @@ end
         test_structure(PkgBenchmark.benchmarkgroup(results))
         @test PkgBenchmark.name(results) == "PkgBenchmark"
         @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
+        tmp = tempname()
+        export_markdown(tmp, results)
+        println(readstring(tmp))
     end
 end
 
-
+#=
 const TEST_PACKAGE_NAME = "Example"
 
 # Set up a test package in a temp folder that we use to test things on
@@ -129,3 +132,4 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
         end
     end
 end
+=#
