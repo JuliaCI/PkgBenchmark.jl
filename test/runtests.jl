@@ -41,10 +41,35 @@ end
     end
 
     @testset "dict" begin
-        results = benchmarkpkg("PkgBenchmark", script = joinpath(BENCHMARK_DIR, "benchmarks_dict.jl"))
+        results = benchmarkpkg("PkgBenchmark", script = joinpath(BENCHMARK_DIR, "benchmarks_dict.jl"), saveresults = false,
+                               tunefile = tempname())
         test_structure(PkgBenchmark.benchmarkgroup(results))
         @test PkgBenchmark.name(results) == "PkgBenchmark"
         @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
+        tmp = tempname()
+        export_markdown(tmp, results)
+        println(readstring(tmp))
+    end
+end
+
+@testset "benchmarkconfig" begin
+    PkgBenchmark.withtemp(tempname()) do f
+        str = """
+        using BenchmarkTools
+        using Base.Test
+        SUITE = BenchmarkGroup()
+        SUITE["foo"] = @benchmarkable 1+1
+
+        @test Base.JLOptions().opt_level == 3
+        @test ENV["JL_PKGBENCHMARK_TEST_ENV"] == "10"
+        """
+        open(f, "w") do file
+            print(file, str)
+        end
+
+        config = BenchmarkConfig(juliacmd = `$(joinpath(JULIA_HOME, Base.julia_exename())) -O3`,
+                                 env = Dict("JL_PKGBENCHMARK_TEST_ENV" => 10))
+        benchmarkpkg("PkgBenchmark", config, script=f, saveresults = false)
     end
 end
 
@@ -91,8 +116,8 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     end
 
     tmp = tempdir()
-    id = string(LibGit2.revparseid(LibGit2.GitRepo(Pkg.dir(TEST_PACKAGE_NAME)), "HEAD"))
-    resfile = joinpath(tmp, "$id.jld")
+    
+   resfile = joinpath(tmp, string(PkgBenchmark._hash(TEST_PACKAGE_NAME, string(commit_master), PkgBenchmark.get_julia_commit(), BenchmarkConfig())) * ".jld")
 
     # Benchmark dirty repo
     cp(joinpath(dirname(@__FILE__), "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); remove_destination=true)
@@ -107,9 +132,11 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
 
     # Commit and benchmark non dirty repo
     commitid = LibGit2.commit(repo, "commiting full benchmarks and REQUIRE"; author=test_sig, committer=test_sig)
-    resfile = joinpath(tmp, "$(string(commitid)).jld")
+    resfile = joinpath(tmp, string(PkgBenchmark._hash(TEST_PACKAGE_NAME, string(commitid), PkgBenchmark.get_julia_commit(), BenchmarkConfig())) * ".jld")
     @test !LibGit2.isdirty(repo)
     results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir, resultsdir=tmp)
+    @test PkgBenchmark.commit(results) == string(commitid)
+    @test PkgBenchmark.juliacommit(results) == Base.GIT_VERSION_INFO.commit    
     test_structure(PkgBenchmark.benchmarkgroup(results))
     @test isfile(resfile)
     @test readresults(resfile) == results

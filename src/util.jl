@@ -1,6 +1,6 @@
 # Run a function after loading a REQUIREs file.
 # Clean up afterwards
-function with_reqs(f, reqs::AbstractString, pre=()->nothing)
+function with_reqs(f, reqs::AbstractString, pre = () -> nothing)
     if isfile(reqs)
         with_reqs(f, Pkg.Reqs.parse(reqs), pre)
     else
@@ -8,7 +8,7 @@ function with_reqs(f, reqs::AbstractString, pre=()->nothing)
     end
 end
 
-function with_reqs(f, reqs::Dict, pre=()->nothing)
+function with_reqs(f, reqs::Dict, pre = () -> nothing)
     pre()
     cd(Pkg.dir()) do
         Pkg.Entry.resolve(merge(Pkg.Reqs.parse("REQUIRE"), reqs))
@@ -32,7 +32,7 @@ function withcommit(f, repo, commit)
         branch = try LibGit2.branch(r) catch err; nothing end
         prev = shastring(r, "HEAD")
         try
-            LibGit2.checkout!(r, shastring(r,commit))
+            LibGit2.checkout!(r, shastring(r, commit))
             f()
         catch err
             rethrow(err)
@@ -45,4 +45,14 @@ function withcommit(f, repo, commit)
 end
 
 shastring(r::LibGit2.GitRepo, refname) = string(LibGit2.revparseid(r, refname))
-shastring(dir::AbstractString, refname) = LibGit2.with(r->shastring(r, refname), LibGit2.GitRepo(dir))
+shastring(dir::AbstractString, refname) = LibGit2.with(r -> shastring(r, refname), LibGit2.GitRepo(dir))
+
+function get_julia_commit(config = BenchmarkConfig())
+    str = """println("__JULIA_COMMIT_START", Base.GIT_VERSION_INFO.commit, "__JULIA_COMMIT_END")"""
+    res = try
+        String(read(`$(config.juliacmd[1]) --startup-file=no -e $str`))
+    catch
+        error("Failed to get commit for julia using command $(config.juliacmd[1])")
+    end
+    juliacommit = split(split(res, "__JULIA_COMMIT_START")[2], "__JULIA_COMMIT_END")[1]
+end
