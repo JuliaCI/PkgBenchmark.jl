@@ -7,8 +7,6 @@
           judgekwargs::Dict{Symbol, Any} = Dict(),
           kwargs...)
 
-You can call `showall(results)` to see a comparison of all the benchmarks.
-
 **Arguments**:
 
 - `pkg` - The package to benchmark.
@@ -22,6 +20,10 @@ You can call `showall(results)` to see a comparison of all the benchmarks.
    If given as a tuple of `Bool`s, the elements in the tuple are applied to `ref` and `baseline` individually.
 - `judgekwargs::Dict{Symbol, Any}` - keyword arguments to pass to the `judge` function in BenchmarkTools
 - if saved results are not used or found, the rest of the keyword arguments `kwargs` are passed to [`benchmarkpkg`](@ref)
+
+** Return value **
+
+Returns a [`BenchmarkJudgement`](@ref)
 """
 function BenchmarkTools.judge(pkg::String, ref::Union{BenchmarkConfig,String}, baseline::Union{BenchmarkConfig,String};
                               resultsdir=defaultresultsdir(pkg), use_saved::Union{Bool,Tuple{Bool,Bool}}=true,
@@ -32,11 +34,11 @@ function BenchmarkTools.judge(pkg::String, ref::Union{BenchmarkConfig,String}, b
 
     function cached(target, _use_saved)
         if target !== nothing && _use_saved
-            juliacommit = get_julia_commit(target)
-            pkgcommit = shastring(Pkg.dir(pkg), target.id == nothing ? "HEAD" : target.id)
+            juliacommit = _get_julia_commit(target)
+            pkgcommit = _shastring(Pkg.dir(pkg), target.id == nothing ? "HEAD" : target.id)
             file = joinpath(resultsdir, string(_hash(pkg, pkgcommit, juliacommit, target)) * ".jld")
             if isfile(file)
-                benchinfo("Found existing result for this config in $resultsdir, using it.   ")
+                _benchinfo("Found existing result for this config in $resultsdir, using it.   ")
                 return readresults(file)
             end
         end
@@ -46,13 +48,22 @@ function BenchmarkTools.judge(pkg::String, ref::Union{BenchmarkConfig,String}, b
     group_ref = cached(ref, use_saved_ref)
     group_baseline = cached(baseline, use_saved_base)
 
-    return judge(pkg, group_ref, group_baseline, f; judgekwargs=judgekwargs)
+    return judge(group_ref, group_baseline, f; judgekwargs=judgekwargs)
 end
 
 function BenchmarkTools.judge(pkg::String, baseline::Union{BenchmarkConfig,String}; kwargs...)
     judge(pkg, BenchmarkConfig(), baseline; kwargs...)
 end
 
-function BenchmarkTools.judge(pkg::String, ref::BenchmarkResults, baseline::BenchmarkResults, f; judgekwargs = Dict())
-    judge(f(benchmarkgroup(ref)), f(benchmarkgroup(ref)); judgekwargs...)
+"""
+    judge(ref::BenchmarkResults, baseline::BenchmarkResults, f;
+          judgekwargs = Dict())
+
+Judges the two benchmarkresults in `ref` and `baseline` using the function `f`.
+"""
+function BenchmarkTools.judge(ref::BenchmarkResults, baseline::BenchmarkResults, f = minimum; judgekwargs = Dict())
+    judged = judge(f(benchmarkgroup(ref)), f(benchmarkgroup(baseline)); judgekwargs...)
+    return BenchmarkJudgement(
+        ref, baseline, judged
+    )
 end

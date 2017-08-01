@@ -63,14 +63,14 @@ function benchmarkpkg(pkg, ref=BenchmarkConfig();
     function do_benchmark()
         !isfile(script) && error("Benchmark script $script not found")
 
-        results_local = with_reqs(require, () -> info("Resolving dependencies for benchmark")) do
-            withtemp(tempname()) do f
-                benchinfo("Running benchmarks...")
-                runbenchmark(script, f, ref, tunefile; retune=retune, custom_loadpath = custom_loadpath)
+        results_local = _with_reqs(require, () -> info("Resolving dependencies for benchmark")) do
+            _withtemp(tempname()) do f
+                _benchinfo("Running benchmarks...")
+                _runbenchmark(script, f, ref, tunefile; retune=retune, custom_loadpath = custom_loadpath)
             end
         end
 
-        pkgsha = shastring(Pkg.dir(pkg), "HEAD")        
+        pkgsha = _shastring(Pkg.dir(pkg), "HEAD")        
 
         return results_local, pkgsha
     end
@@ -82,7 +82,7 @@ function benchmarkpkg(pkg, ref=BenchmarkConfig();
             error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
                   "changes before benchmarking a specific commit")
         end
-        results_local, pkgsha = withcommit(do_benchmark, LibGit2.GitRepo(Pkg.dir(pkg)), ref.id)
+        results_local, pkgsha = _withcommit(do_benchmark, LibGit2.GitRepo(Pkg.dir(pkg)), ref.id)
     else
         # benchmark on the current state of the repo
         results_local, pkgsha = do_benchmark()
@@ -90,7 +90,7 @@ function benchmarkpkg(pkg, ref=BenchmarkConfig();
 
    
     resgroup, juliasha, vinfo = results_local["results"], results_local["juliasha"], results_local["vinfo"]
-    results = BenchmarkResults(pkg, dirty ? "dirty" : pkgsha, resgroup, now(), juliasha, vinfo)
+    results = BenchmarkResults(pkg, dirty ? "dirty" : pkgsha, resgroup, now(), juliasha, vinfo, ref)
 
     if !dirty
         if saveresults
@@ -109,19 +109,19 @@ function benchmarkpkg(pkg, ref=BenchmarkConfig();
                 resfile = joinpath(resultsdir, string(_hash(pkg, pkgsha, juliasha, ref)) * ".jld")
                 if !isfile(resfile) || overwrite == true
                     writeresults(resfile, results)
-                    benchinfo("Results of the benchmark were written to $resfile")
+                    _benchinfo("Results of the benchmark were written to $resfile")
                 else
-                    benchinfo("Found existing results, no output written")
+                    _benchinfo("Found existing results, no output written")
                 end
             end
         end
     else
-        benchwarn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
+        _benchwarn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
     end
     return results
 end
 
-function runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String; 
+function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String; 
                       retune=false, custom_loadpath = nothing)
     color = Base.have_color ? "--color=yes" : "--color=no"
     compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
@@ -138,7 +138,7 @@ function runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkCo
     exec_str *=
         """
         using PkgBenchmark
-        PkgBenchmark.runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
+        PkgBenchmark._runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
         """
 
     target_env = [k => v for (k, v) in benchmarkconfig.env]
@@ -148,7 +148,7 @@ function runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkCo
     return load(File(format"JLD", output))
 end
 
-function runbenchmark_local(file, output, tunefile, retune)
+function _runbenchmark_local(file, output, tunefile, retune)
     # Loading
     _reset_stack()
     include(file)
@@ -160,23 +160,70 @@ function runbenchmark_local(file, output, tunefile, retune)
 
     # Tuning
     if isfile(tunefile) && !retune
-        benchinfo("Using benchmark tuning data in $tunefile")
+        _benchinfo("Using benchmark tuning data in $tunefile")
         loadparams!(suite, JLD.load(tunefile, "suite"), :evals, :samples)
     else
-        benchinfo("Creating benchmark tuning file $tunefile")
+        _benchinfo("Creating benchmark tuning file $tunefile")
         mkpath(dirname(tunefile))
-        tune!(suite)
+        _tune!(suite)
         save(File(format"JLD", tunefile), "suite", params(suite))
     end
 
     # Running
-    results = run(suite)
+    results = _run(suite)
 
     # Output
     vinfo = first(split(readstring(`julia -e 'versioninfo(true)'`), "Environment"))
     juliasha = Base.GIT_VERSION_INFO.commit
     save(File(format"JLD", output), "results", results, "vinfo", vinfo, "juliasha", juliasha)
     return nothing
+end
+
+using ProgressMeter
+
+function _tune!(group::BenchmarkTools.BenchmarkGroup; verbose::Bool = false, root = true,
+                prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Tuning: "), hierarchy = [], kwargs...)
+    BenchmarkTools.gcscrub() # run GC before running group, even if individual benchmarks don't manually GC
+    i = 1
+    for id in keys(group)
+        _tune!(group[id]; verbose = verbose, prog = prog, hierarchy = push!(copy(hierarchy), (repr(id), i, length(keys(group)))), kwargs...)
+        i += 1
+    end
+    return group
+end
+
+function _tune!(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.params;
+               prog = nothing, verbose::Bool = false, pad = "", hierarchy = [], kwargs...)
+    BenchmarkTools.warmup(b, false)
+    estimate = ceil(Int, minimum(BenchmarkTools.lineartrial(b, p; kwargs...)))
+    b.params.evals = BenchmarkTools.guessevals(estimate)
+    if prog != nothing
+        indent = 0
+        ProgressMeter.next!(prog; showvalues = [map(id -> ("  "^(indent += 1) * "[$(id[2])/$(id[3])]", id[1]), hierarchy)...])
+    end
+    return b
+end
+
+function _run(group::BenchmarkTools.BenchmarkGroup, args...;
+              prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Benchmarking: "), hierarchy = [], kwargs...)
+    result = similar(group)
+    BenchmarkTools.gcscrub() # run GC before running group, even if individual benchmarks don't manually GC
+    i = 1
+    for id in keys(group)
+        result[id] = _run(group[id], args...; prog = prog, hierarchy = push!(copy(hierarchy), (repr(id), i, length(keys(group)))), kwargs...)
+        i += 1
+    end
+    return result
+end
+
+function _run(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.params; 
+                   prog = nothing, verbose::Bool = false, pad = "", hierarchy = [], kwargs...)
+    res = BenchmarkTools.run_result(b, p; kwargs...)[1]
+    if prog != nothing
+        indent = 0
+        ProgressMeter.next!(prog; showvalues = [map(id -> ("  "^(indent += 1) * "[$(id[2])/$(id[3])]", id[1]), hierarchy)...])
+    end
+    return res
 end
 
 """

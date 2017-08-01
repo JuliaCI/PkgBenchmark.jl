@@ -11,7 +11,7 @@ This includes the following:
   the command flags used (e.g. optimization level with `-O`).
 * Custom environment variables (e.g. `JULIA_NUM_THREADS`).
 """
-struct BenchmarkConfig
+immutable BenchmarkConfig
     id::Union{String,Void}
     juliacmd::Cmd
     env::Dict{String,Any}
@@ -57,19 +57,19 @@ BenchmarkConfig(cfg::BenchmarkConfig) = cfg
 BenchmarkConfig(str::String) = BenchmarkConfig(id = str)
 BenchmarkConfig(::Void) = BenchmarkConfig()
 
-const INDENT = "    "
+const _INDENT = "    "
 
 function Base.show(io::IO, bcfg::BenchmarkConfig)
     println(io, "BenchmarkConfig:")
-    println(io, INDENT, "id: ", bcfg.id)
-    println(io, INDENT, "juliacmd: ", bcfg.juliacmd)
-    print(io, INDENT, "env: ")
+    println(io, _INDENT, "id: ", bcfg.id)
+    println(io, _INDENT, "juliacmd: ", bcfg.juliacmd)
+    print(io, _INDENT, "env: ")
     if !isempty(bcfg.env)
         first = true
         for (k, v) in bcfg.env
             if !first
                 println(io)
-                print(io, INDENT, " "^strwidth("env: "))
+                print(io, _INDENT, " "^strwidth("env: "))
             end
             first = false
             print(io, k, " => ", v)

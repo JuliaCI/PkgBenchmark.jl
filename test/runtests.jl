@@ -46,14 +46,12 @@ end
         test_structure(PkgBenchmark.benchmarkgroup(results))
         @test PkgBenchmark.name(results) == "PkgBenchmark"
         @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
-        tmp = tempname()
-        export_markdown(tmp, results)
-        println(readstring(tmp))
+        export_markdown(STDOUT, results)
     end
 end
 
 @testset "benchmarkconfig" begin
-    PkgBenchmark.withtemp(tempname()) do f
+    PkgBenchmark._withtemp(tempname()) do f
         str = """
         using BenchmarkTools
         using Base.Test
@@ -117,7 +115,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
 
     tmp = tempdir()
     
-   resfile = joinpath(tmp, string(PkgBenchmark._hash(TEST_PACKAGE_NAME, string(commit_master), PkgBenchmark.get_julia_commit(), BenchmarkConfig())) * ".jld")
+   resfile = joinpath(tmp, string(PkgBenchmark._hash(TEST_PACKAGE_NAME, string(commit_master), PkgBenchmark._get_julia_commit(), BenchmarkConfig())) * ".jld")
 
     # Benchmark dirty repo
     cp(joinpath(dirname(@__FILE__), "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); remove_destination=true)
@@ -132,7 +130,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
 
     # Commit and benchmark non dirty repo
     commitid = LibGit2.commit(repo, "commiting full benchmarks and REQUIRE"; author=test_sig, committer=test_sig)
-    resfile = joinpath(tmp, string(PkgBenchmark._hash(TEST_PACKAGE_NAME, string(commitid), PkgBenchmark.get_julia_commit(), BenchmarkConfig())) * ".jld")
+    resfile = joinpath(tmp, string(PkgBenchmark._hash(TEST_PACKAGE_NAME, string(commitid), PkgBenchmark._get_julia_commit(), BenchmarkConfig())) * ".jld")
     @test !LibGit2.isdirty(repo)
     results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir, resultsdir=tmp)
     @test PkgBenchmark.commit(results) == string(commitid)
@@ -148,8 +146,9 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
 
     @testset "judging" begin
         judgement = judge(TEST_PACKAGE_NAME, "HEAD~", "HEAD", custom_loadpath=old_pkgdir)
-        test_structure(judgement)
+        test_structure(PkgBenchmark.benchmarkgroup(judgement))
+        export_markdown(STDOUT, judgement)        
         judgement = judge(TEST_PACKAGE_NAME, "HEAD", custom_loadpath=old_pkgdir)
-        test_structure(judgement)
+        test_structure(PkgBenchmark.benchmarkgroup(judgement)) 
     end
 end
