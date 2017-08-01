@@ -56,3 +56,6 @@ function get_julia_commit(config = BenchmarkConfig())
     end
     juliacommit = split(split(res, "__JULIA_COMMIT_START")[2], "__JULIA_COMMIT_END")[1]
 end
+
+benchinfo(str) = print_with_color(Base.info_color(), STDOUT, "PkgBenchmark: ", str, "\n")
+benchwarn(str) = print_with_color(Base.info_color(), STDOUT, "PkgBenchmark: ", str, "\n")

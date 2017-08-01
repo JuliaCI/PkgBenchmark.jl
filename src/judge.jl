@@ -36,7 +36,7 @@ function BenchmarkTools.judge(pkg::String, ref::Union{BenchmarkConfig,String}, b
             pkgcommit = shastring(Pkg.dir(pkg), target.id == nothing ? "HEAD" : target.id)
             file = joinpath(resultsdir, string(_hash(pkg, pkgcommit, juliacommit, target)) * ".jld")
             if isfile(file)
-                info("Found existing result for this config in $resultsdir, using it.   ")
+                benchinfo("Found existing result for this config in $resultsdir, using it.   ")
                 return readresults(file)
             end
         end

@@ -65,7 +65,7 @@ function benchmarkpkg(pkg, ref=BenchmarkConfig();
 
         results_local = with_reqs(require, () -> info("Resolving dependencies for benchmark")) do
             withtemp(tempname()) do f
-                info("Running benchmarks...")
+                benchinfo("Running benchmarks...")
                 runbenchmark(script, f, ref, tunefile; retune=retune, custom_loadpath = custom_loadpath)
             end
         end
@@ -109,14 +109,14 @@ function benchmarkpkg(pkg, ref=BenchmarkConfig();
                 resfile = joinpath(resultsdir, string(_hash(pkg, pkgsha, juliasha, ref)) * ".jld")
                 if !isfile(resfile) || overwrite == true
                     writeresults(resfile, results)
-                    info("Results of the benchmark were written to $resfile")
+                    benchinfo("Results of the benchmark were written to $resfile")
                 else
-                    info("Found existing results, no output written")
+                    benchinfo("Found existing results, no output written")
                 end
             end
         end
     else
-        warn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
+        benchwarn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
     end
     return results
 end
@@ -160,10 +160,10 @@ function runbenchmark_local(file, output, tunefile, retune)
 
     # Tuning
     if isfile(tunefile) && !retune
-        println("Using benchmark tuning data in $tunefile")
+        benchinfo("Using benchmark tuning data in $tunefile")
         loadparams!(suite, JLD.load(tunefile, "suite"), :evals, :samples)
     else
-        println("Creating benchmark tuning file $tunefile")
+        benchinfo("Creating benchmark tuning file $tunefile")
         mkpath(dirname(tunefile))
         tune!(suite)
         save(File(format"JLD", tunefile), "suite", params(suite))
