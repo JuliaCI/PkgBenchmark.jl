@@ -6,10 +6,11 @@ makedocs(
     sitename = "PkgBenchmark.jl",
     pages = Any[
         "Home" => "index.md",
-        "Manual" => [
-            "man/define_benchmarks.md",
-            "man/run_benchmarks.md",
-        ]
+        "define_benchmarks.md",
+        "run_benchmarks.md",
+        "comparing_commits.md",
+        "export_markdown.md",
+        "Reference" => "ref.md",
     ]
 )
 
