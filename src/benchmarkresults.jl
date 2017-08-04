@@ -83,7 +83,7 @@ function export_markdown(io::IO, results::BenchmarkResults)
                 # Benchmark Report for *$(name(results))*
                 
                 ## Job Properties    
-                * Time of benchmark: $(Base.Dates.format(date(results), "m u Y - H:M"))
+                * Time of benchmark: $(Base.Dates.format(date(results), "d u Y - H:M"))
                 * Package commit: $(commit(results)[1:min(6, length(commit(results)))])
                 * Julia commit: $(juliacommit(results)[1:min(6, length(juliacommit(results)))])
                 * Julia command flags: $julia_command_flags

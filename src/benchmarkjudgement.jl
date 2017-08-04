@@ -69,8 +69,8 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement)
                 
                 ## Job Properties
                 * Time of benchmarks:
-                    - Target: $(Base.Dates.format(date(target), "m u Y - H:M"))
-                    - Baseline: $(Base.Dates.format(date(baseline), "m u Y - H:M"))
+                    - Target: $(Base.Dates.format(date(target), "d u Y - H:M"))
+                    - Baseline: $(Base.Dates.format(date(baseline), "d u Y - H:M"))
                 * Package commits: 
                     - Target: $(commit(target)[1:min(6, length(commit(target)))])
                     - Baseline: $(commit(baseline)[1:min(6, length(commit(baseline)))])

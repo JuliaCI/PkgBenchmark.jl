@@ -33,7 +33,6 @@ function test_structure(g)
     @test g["trigonometry"]["circular"] |> keys |> collect |> Set == _keys
 end
 
-"""
 @testset "structure" begin
     @testset "macro" begin
         include(joinpath(BENCHMARK_DIR, "benchmarks.jl"))
@@ -49,7 +48,6 @@ end
         export_markdown(STDOUT, results)
     end
 end
-"""
 
 const TEST_PACKAGE_NAME = "Example"
 
@@ -153,7 +151,6 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     LibGit2.commit(repo, "dummy commit"; author=test_sig, committer=test_sig)
 
     @testset "judging" begin
-        println("DOING JUDGING!!!")
         judgement = judge(TEST_PACKAGE_NAME, "HEAD~", "HEAD", custom_loadpath=old_pkgdir)
         test_structure(PkgBenchmark.benchmarkgroup(judgement))
         export_markdown(STDOUT, judgement)        
