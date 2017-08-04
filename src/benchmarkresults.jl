@@ -9,7 +9,7 @@ The following (unexported) methods are defined on a `BenchmarkResults` (written 
 * `benchmarkgroup(results)::BenchmarkGroup` - a [`BenchmarkGroup`](https://github.com/JuliaCI/BenchmarkTools.jl/blob/master/doc/manual.md#the-benchmarkgroup-type)
    contaning the results of the benchmark.
 * `date(results)::DateTime` - Tthe time when the benchmarks were executed
-* `benchmarkconfig(results)::BenchmarkCOnfig` - The [`BenchmarkConfig`](@ref) used for the benchmarks.
+* `benchmarkconfig(results)::BenchmarkConfig` - The [`BenchmarkConfig`](@ref) used for the benchmarks.
 
 `BenchmarkResults` can be exported to markdown using the function [`export_markdown`](@ref).
 """
@@ -51,12 +51,12 @@ end
 
 
 """
-    export_markdown(file::String, results::BenchmarkResults)
-    export_markdown(io::IO, results::BenchmarkResults)
+    export_markdown(file::String, results::Union{BenchmarkResults, BenchmarkJudgement})
+    export_markdown(io::IO, results::Union{BenchmarkResults, BenchmarkJudgement})
 
 Writes the `results` to `file` or `io` in markdown format.
 
-See also: [`BenchmarkResults`](@ref)
+See also: [`BenchmarkResults`](@ref), [`BenchmarkJudgement`](@ref)
 """
 function export_markdown(file::String, results::BenchmarkResults)
     open(file, "w") do f

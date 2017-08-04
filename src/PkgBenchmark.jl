@@ -6,6 +6,7 @@ using BenchmarkTools
 using FileIO
 using JLD
 using Compat
+using ProgressMeter
 
 export benchmarkpkg, judge, @benchgroup, @bench, writeresults, readresults, export_markdown
 export BenchmarkConfig, BenchmarkResults, BenchmarkJudgement

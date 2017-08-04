@@ -29,8 +29,7 @@ end
 # to the original commit / branch.
 function _withcommit(f, repo, commit)
     LibGit2.transact(repo) do r
-        branch = try LibGit2.branch(r) catch err; nothing end
-        prev = _shastring(r, "HEAD")
+        branch = try LibGit2.branch(r) catch err; nothing end      
         try
             LibGit2.checkout!(r, _shastring(r, commit))
             f()
@@ -44,8 +43,8 @@ function _withcommit(f, repo, commit)
     end
 end
 
-_shastring(r::LibGit2.GitRepo, refname) = string(LibGit2.revparseid(r, refname))
-_shastring(dir::AbstractString, refname) = LibGit2.with(r -> _shastring(r, refname), LibGit2.GitRepo(dir))
+_shastring(r::LibGit2.GitRepo, targetname) = string(LibGit2.revparseid(r, targetname))
+_shastring(dir::AbstractString, targetname) = LibGit2.with(r -> _shastring(r, targetname), LibGit2.GitRepo(dir))
 
 function _get_julia_commit(config = BenchmarkConfig())
     str = """println("__JULIA_COMMIT_START", Base.GIT_VERSION_INFO.commit, "__JULIA_COMMIT_END")"""
@@ -59,7 +58,6 @@ end
 
 _benchinfo(str) = print_with_color(Base.info_color(), STDOUT, "PkgBenchmark: ", str, "\n")
 _benchwarn(str) = print_with_color(Base.info_color(), STDOUT, "PkgBenchmark: ", str, "\n")
-
 
 ############
 # Markdown #
