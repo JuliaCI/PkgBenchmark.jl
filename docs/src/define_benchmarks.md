@@ -3,12 +3,12 @@
 
 Benchmarks are to be written in `<PKGROOT>/benchmark/benchmarks.jl` and can be defined in two different ways:
 
-* Using the standard dictionary based interface from BenchmarkTools, as documented [here](https://github.com/JuliaCI/BenchmarkTools.jl/blob/master/doc/manual.md#defining-benchmark-suites). The naming convention
-that must be used is to name the benchmark suite variable `SUITE`. An example file using the dictionary based interface can be found [here](https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/benchmark/benchmarks_dict.jl). Note that there is no need to have PkgBenchmark loaded
-to define the benchmark suite if the dict based interface is used.
+* Using the standard dictionary based interface from BenchmarkTools, as documented [here](https://github.com/JuliaCI/BenchmarkTools.jl/blob/master/doc/manual.md#defining-benchmark-suites). The naming convention that must be used is to name the benchmark suite variable `SUITE`. An example file using the dictionary based interface can be found [here](https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/benchmark/benchmarks_dict.jl). Note that there is no need to have PkgBenchmark loaded to define the benchmark suite if the dict based interface is used.
 * Using the `@benchgroup` and `@bench` macros. These are analogous to `@testset` and `@test` macros, with slightly different syntax. An example file using the macro based interface can be found [here](https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/benchmark/benchmarks.jl).
 
-`<PKGROOT>/benchmark/REQUIRE` can contain dependencies needed to run the benchmark suite.
+
+!!! note
+    Running this script directly does not actually run the benchmarks, this is the job of PkgBenchmark, see the next section.
 
 ## Writing benchmarks using the macro based API
 
@@ -71,5 +71,6 @@ end
 end
 ```
 
-!!! note
-    Running this script directly does not actually run the benchmarks, see the next section.
+## Custom requirements for benchmarks
+
+`<PKGROOT>/benchmark/REQUIRE` can contain dependencies needed to run the benchmark suite, similarly how `<PKGROOT>/benchmark/REQUIRE` can contain dependencies for the tests.

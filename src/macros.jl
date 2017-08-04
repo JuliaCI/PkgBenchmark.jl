@@ -22,8 +22,8 @@ macro benchgroup(expr...)
     end
 end
 
-ok_to_splat(x) = (x,)
-ok_to_splat(x::Tuple) = x
+_ok_to_splat(x) = (x,)
+_ok_to_splat(x::Tuple) = x
 
 macro bench(expr...)
     id = expr[1]
@@ -31,6 +31,6 @@ macro bench(expr...)
     b = :(BenchmarkTools.@benchmarkable $(bexpr...))
 
     quote
-        _top_group()[ok_to_splat($(esc(id)))...] = $(esc(b))
+        _top_group()[_ok_to_splat($(esc(id)))...] = $(esc(b))
     end
 end
