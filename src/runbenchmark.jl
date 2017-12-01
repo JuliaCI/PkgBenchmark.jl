@@ -214,7 +214,7 @@ end
 
 function _tune!(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.params;
                prog = nothing, verbose::Bool = false, pad = "", hierarchy = [], kwargs...)
-    BenchmarkTools.warmup(b, false)
+    BenchmarkTools.warmup(b, verbose=false)
     estimate = ceil(Int, minimum(BenchmarkTools.lineartrial(b, p; kwargs...)))
     b.params.evals = BenchmarkTools.guessevals(estimate)
     if prog != nothing
