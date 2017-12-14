@@ -38,6 +38,18 @@ function BenchmarkTools.judge(pkg::String, baseline::Union{BenchmarkConfig,Strin
     judge(pkg, BenchmarkConfig(), baseline; kwargs...)
 end
 
+function BenchmarkTools.judge(pkg::String; kwargs...)
+    versdir = joinpath(Pkg.dir("METADATA"), pkg, "versions")
+    pkgversions = VersionNumber[]
+    for ver in readdir(versdir)
+        ismatch(Base.VERSION_REGEX, ver) || continue
+        isfile(versdir, ver, "sha1") || continue
+        push!(pkgversions, convert(VersionNumber,ver))
+    end
+    latest = maximum(pkgversions)
+    judge(pkg, "v"*string(latest); kwargs...)
+end
+
 """
     judge(target::BenchmarkResults, baseline::BenchmarkResults, f;
           judgekwargs = Dict())
