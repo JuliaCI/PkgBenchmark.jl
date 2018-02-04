@@ -171,7 +171,7 @@ function _runbenchmark_local(file, output, tunefile, retune)
     results = _run(suite)
 
     # Output
-    vinfo = first(split(readstring(`julia -e 'versioninfo(true)'`), "Environment"))
+    vinfo = first(split(read(`julia -e 'versioninfo(true)'`, String), "Environment"))
     juliasha = Base.GIT_VERSION_INFO.commit
 
     open(output, "w") do iof
