@@ -21,15 +21,18 @@ function _withtemp(f, file)
     try f(file)
     catch err
         rethrow()
-    finally rm(file; force = true) end
+    finally
+        try rm(file; force = true) end
+    end
 end
 
 
 # Runs a function at a commit on a repo and afterwards goes back
 # to the original commit / branch.
 function _withcommit(f, repo, commit)
+    original_commit = _shastring(repo, "HEAD")
     LibGit2.transact(repo) do r
-        branch = try LibGit2.branch(r) catch err; nothing end      
+        branch = try LibGit2.branch(r) catch err; nothing end
         try
             LibGit2.checkout!(r, _shastring(r, commit))
             f()
@@ -38,6 +41,8 @@ function _withcommit(f, repo, commit)
         finally
             if branch !== nothing
                 LibGit2.branch!(r, branch)
+            else
+                LibGit2.checkout!(r, original_commit)
             end
         end
     end
@@ -45,16 +50,6 @@ end
 
 _shastring(r::LibGit2.GitRepo, targetname) = string(LibGit2.revparseid(r, targetname))
 _shastring(dir::AbstractString, targetname) = LibGit2.with(r -> _shastring(r, targetname), LibGit2.GitRepo(dir))
-
-function _get_julia_commit(config = BenchmarkConfig())
-    str = """println("__JULIA_COMMIT_START", Base.GIT_VERSION_INFO.commit, "__JULIA_COMMIT_END")"""
-    res = try
-        String(read(`$(config.juliacmd[1]) --startup-file=no -e $str`))
-    catch
-        error("Failed to get commit for julia using command $(config.juliacmd[1])")
-    end
-    juliacommit = split(split(res, "__JULIA_COMMIT_START")[2], "__JULIA_COMMIT_END")[1]
-end
 
 _benchinfo(str) = print_with_color(Base.info_color(), STDOUT, "PkgBenchmark: ", str, "\n")
 _benchwarn(str) = print_with_color(Base.info_color(), STDOUT, "PkgBenchmark: ", str, "\n")

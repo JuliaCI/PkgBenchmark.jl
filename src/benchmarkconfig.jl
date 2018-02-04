@@ -11,18 +11,10 @@ This includes the following:
   the command flags used (e.g. optimization level with `-O`).
 * Custom environment variables (e.g. `JULIA_NUM_THREADS`).
 """
-immutable BenchmarkConfig
+struct BenchmarkConfig
     id::Union{String,Void}
     juliacmd::Cmd
     env::Dict{String,Any}
-end
-
-function _hash(pkgname::String, pkgcommit::String, juliacommit, config::BenchmarkConfig)
-    return hash(pkgname,
-                hash(juliacommit,
-                    hash(length(config.juliacmd) > 1 ? config.juliacmd[2:end] : 0,
-                        hash(pkgcommit,
-                            hash(config.env)))))
 end
 
 """
@@ -41,9 +33,15 @@ Creates a `BenchmarkConfig` from the following keyword arguments:
 
 # Examples
 ```julia
-BenchmarkConfig(id = "performance_improvements",
-                juliacmd = `julia -O3`,
-                env = Dict("JULIA_NUM_THREADS" => 4))
+julia> using Pkgbenchmark
+
+julia> BenchmarkConfig(id = "performance_improvements",
+                       juliacmd = `julia -O3`,
+                       env = Dict("JULIA_NUM_THREADS" => 4))
+BenchmarkConfig:
+    id: performance_improvements
+    juliacmd: `julia -O3`
+    env: JULIA_NUM_THREADS => 4
 ```
 """
 function BenchmarkConfig(;id::Union{String,Void} = nothing,
@@ -56,6 +54,24 @@ end
 BenchmarkConfig(cfg::BenchmarkConfig) = cfg
 BenchmarkConfig(str::String) = BenchmarkConfig(id = str)
 BenchmarkConfig(::Void) = BenchmarkConfig()
+
+function BenchmarkConfig(d::Dict)
+    BenchmarkConfig(
+        [fieldtype(BenchmarkConfig, fname)(d[string(fname)]) for fname in fieldnames(BenchmarkConfig)]...
+    )
+end
+
+# Arr!...
+function Base.Cmd(d::Dict)
+    Cmd(
+        Cmd(convert(Vector{String}, d["exec"])),
+        d["ignorestatus"],
+        d["flags"],
+        d["env"],
+        d["dir"],
+    )
+end
+
 
 const _INDENT = "    "
 

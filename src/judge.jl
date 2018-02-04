@@ -2,8 +2,6 @@
     judge(pkg::String,
           [target]::Union{String, BenchmarkConfig},
           baseline::Union{String, BenchmarkConfig};
-          f=minimum,
-          judgekwargs::Dict{Symbol, Any} = Dict(),
           kwargs...)
 
 **Arguments**:
@@ -17,7 +15,7 @@
 - `f` - Estimator function to use in the [judging](https://github.com/JuliaCI/BenchmarkTools.jl/blob/master/doc/manual.md#trialratio-and-trialjudgement).
 - `judgekwargs::Dict{Symbol, Any}` - keyword arguments to pass to the `judge` function in BenchmarkTools
 
-The rest of the keyword arguments `kwargs` are passed to [`benchmarkpkg`](@ref)
+The remaining keyword arguments are passed to [`benchmarkpkg`](@ref)
 
 **Return value**:
 

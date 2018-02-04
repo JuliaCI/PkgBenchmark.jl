@@ -1,39 +1,22 @@
-# Package benchmarking API
-
-defaultscript(pkg)     = Pkg.dir(pkg, "benchmark", "benchmarks.jl")
-defaultrequire(pkg)    = Pkg.dir(pkg, "benchmark", "REQUIRE")
-defaultresultsdir(pkg) = Pkg.dir(".benchmarks", pkg, "results")
-defaulttunefile(pkg)   = Pkg.dir(".benchmarks", pkg, ".tune.jld")
-
 """
-    benchmarkpkg(pkg, [target]::Union{String, BenchmarkConfig};
-                saveresults = true,
-                retune      = false,
-                overwrite   = true,
-                usesaved    = false,
-                script      = "\$(Pkg.dir(pkg))/benchmark/benchmarks.jl"
-                require     = "\$(Pkg.dir(pkg))/benchmark/REQUIRE",
-                tunefile    = "\$(Pkg.dir())/.benchmarks/\$(pkg)/results",
-                resultsdir  = "\$(Pkg.dir())/.benchmarks/\$(pkg)/.tune.jld")
+    benchmarkpkg(pkg, [target]::Union{String, BenchmarkConfig}; kwargs...)
 
-Run a benchmark on the package `pkg` using the [`BenchmarkConfig`](@ref) (or git identifier) `target` 
-and return `results` which is an instance of a [`BenchmarkResults`](@ref).
+Run a benchmark on the package `pkg` using the [`BenchmarkConfig`](@ref) or git identifier `target`.
+Examples of git identifiers are commit shas, branch names, or e.g. "HEAD~1".
+Return a [`BenchmarkResults`](@ref).
+
+The argument `pkg` can be a name of a package or a path to a directory to a package.
 
 **Keyword arguments**:
 
-* `saveresults` - If set to false, results will not be saved in `resultsdir`.
-* `usesaved` - If a previously saved result for `target` is found, use that instead of rerunning the benchmarks.
-* `retune` - Force a re-tune, saving the new tuning to the tune file
-* `overwrite` - Overwrite the result file if it already exists
-* `script` - The script with the benchmark.
-* `require` - The REQUIRE file containing dependencies needed for the benchmark.
-* `tunefile` - File to use for tuning benchmarks, will be created if doesn't exist. Defaults to `PKG/benchmark/.tune.jld`
-*  `resultsdir` - The directory where to file away results.
+* `script` - The script with the benchmarks, if not given, defaults to `benchmark/benchmarks.jl` in the package folder.
+* `resultfile` - If set, saves the output to `resultfile`
+* `retune` - Force a re-tune, saving the new tuning to the tune file.
 
-Provided the repository is not dirty, results generated will be saved in this directory in a file, named using a hash based on
-the package commit, the julia commit, etc. **Note that the content of the benchmarks script is not included in this hash**.
-The result can later by functions such as [`judge`](@ref). If you choose to, you can save the results manually using
-[`writeresults(file, results)`](@ref) where `results` is the return value of this function. It can be read back with [`readresults(file)`](@ref).
+The result can be used by functions such as [`judge`](@ref). If you choose to, you can save the results manually using
+[`writeresults`](@ref) where `results` is the return value of this function. It can be read back with [`readresults`](@ref).
+
+If a `REQUIRE` file exists in the same folder as `script`, load package requirements from that file before benchmarking.
 
 **Example invocations:**
 
@@ -42,107 +25,102 @@ using PkgBenchmark
 
 benchmarkpkg("MyPkg") # run the benchmarks at the current state of the repository
 benchmarkpkg("MyPkg", "my-feature") # run the benchmarks for a particular branch/commit/tag
-benchmarkpkg("MyPkg", "my-feature"; script="/home/me/mycustombenchmark.jl", resultsdir="/home/me/benchmarkXresults")
-  # note: its a good idea to set a new resultsdir with a new benchmark script.
-  # `PKG/benchmark/.results` is meant for `PKG/benchmark/benchmarks.jl` script.
-benchmarkpkg("MyPkg", BenchmarkConfig(id = "my-feature", 
+benchmarkpkg("MyPkg", "my-feature"; script="/home/me/mycustombenchmark.jl")
+benchmarkpkg("MyPkg", BenchmarkConfig(id = "my-feature",
                                       env = Dict("JULIA_NUM_THREADS" => 4),
                                       juliacmd = `julia -O3`))
 ```
 """
-function benchmarkpkg(pkg, target=BenchmarkConfig();
-                      script=defaultscript(pkg),
-                      require=defaultrequire(pkg),
-                      resultsdir=defaultresultsdir(pkg),
-                      tunefile=defaulttunefile(pkg),
-                      retune=false,
-                      usesaved=false,
-                      saveresults=true,
-                      overwrite=true,
-                      custom_loadpath="", #= used in tests =#
-                      promptsave=nothing)
+function benchmarkpkg(
+        pkg::String,
+        target=BenchmarkConfig();
+        script=nothing,
+        resultfile=nothing,
+        retune=false,
+        custom_loadpath="" #= used in tests =#
+    )
     target = BenchmarkConfig(target)
-    promptsave != nothing && Base.warn_once("the `promptsave` keyword is deprecated and will be removed.")
-    !isfile(script) && error("Benchmark script $script not found")
-    dirty = LibGit2.with(LibGit2.isdirty, LibGit2.GitRepo(Pkg.dir(pkg)))
-    original_sha = _shastring(Pkg.dir(pkg), "HEAD")
-    
+
+    # Locate script
+    if script === nothing
+        if isdir(Pkg.dir(pkg))
+            script = Pkg.dir(pkg, "benchmark", "benchmarks.jl")
+        end
+    end
+    if !isfile(script)
+        error("bencmark script at $script not found")
+    end
+
+    # Locate pacakge
+    if isdir(Pkg.dir(pkg))
+        pkgdir = Pkg.dir(pkg)
+        tunefile = Pkg.dir(".pkgbenchmark", "$(pkg)_tune.json")
+    else
+        pkgdir = pkg
+        tunefile = joinpath(pkgdir, "tune.json")
+        if !isdir(pkgdir)
+            error("package directory at $pkgdir not found")
+        end
+    end
+
+    isgitrepo = isdir(joinpath(pkgdir, ".git"))
+    if isgitrepo
+        isdirty = LibGit2.with(LibGit2.isdirty, LibGit2.GitRepo(pkgdir))
+        original_sha = _shastring(Pkg.dir(pkg), "HEAD")
+    end
+
     # In this function the package is at the commit we want to benchmark
     function do_benchmark()
-        foundfile = false
-        pkgsha = _shastring(Pkg.dir(pkg), "HEAD")        
-        if ((target.id == nothing && !dirty) || target.id !== nothing) && usesaved
-            juliasha = _get_julia_commit(target)
-            file = joinpath(resultsdir, string(_hash(pkg, pkgsha, juliasha, target)) * ".jld")
-            if isfile(file)
-                foundfile = true
-                _benchinfo("Found existing result in $resultsdir, using it.   ")
-                results = readresults(file)
+        shastring = begin
+            if isgitrepo
+                isdirty ? "dirty" : _shastring(pkgdir, "HEAD")
+            else
+                "non gitrepo"
             end
-        end
-        if !foundfile 
-            # Need to redefine pkgsha here for some reason...
-            results_local = _with_reqs(require, () -> info("Resolving dependencies for benchmark")) do
-                _withtemp(tempname()) do f
-                    _benchinfo("Running benchmarks...")
-                    _runbenchmark(script, f, target, tunefile; retune=retune, custom_loadpath = custom_loadpath)
-                end
-            end
-            resgroup, juliasha, vinfo = results_local["results"], results_local["juliasha"], results_local["vinfo"]
-            results = BenchmarkResults(pkg, dirty ? "dirty" : pkgsha, resgroup, now(), juliasha, vinfo, target)
         end
 
+        local results
+        results_local = _with_reqs(joinpath(dirname(script), "REQUIRE"), () -> info("Resolving dependencies for benchmark...")) do
+            _withtemp(tempname()) do f
+                _benchinfo("Running benchmarks...")
+                _runbenchmark(script, f, target, tunefile; retune=retune, custom_loadpath = custom_loadpath)
+            end
+        end
+        io = IOBuffer(results_local["results"])
+        seek(io, 0)
+        resgroup = BenchmarkTools.load(io)[1]
+        juliasha = results_local["juliasha"]
+        vinfo = results_local["vinfo"]
+        results = BenchmarkResults(pkg, shastring, resgroup, now(), juliasha, vinfo, target)
         return results
     end
 
     if target.id !== nothing
-        if dirty
-            error("$(Pkg.dir(pkg)) is dirty. Please commit/stash your " *
+        if !isgitrepo
+            error("$pkgdir is not a git repo, cannot benchmark at $(target.id)")
+        elseif isdirty
+            error("$pkgdir is dirty. Please commit/stash your ",
                   "changes before benchmarking a specific commit")
         end
-        results = _withcommit(do_benchmark, LibGit2.GitRepo(Pkg.dir(pkg)), target.id)
+        results = _withcommit(do_benchmark, LibGit2.GitRepo(pkgdir), target.id)
     else
-        # benchmark on the current state of the repo
         results = do_benchmark()
     end
 
-    if !dirty
-        if saveresults
-            tosave = true
-            if promptsave == true
-                print("File results of this run?, resultsdir=$resultsdir) (Y/n) ")
-                response = string(readline())
-                tosave = if response == "" || lowercase(response) == "y"
-                    true
-                else
-                    false
-                end
-            end
-            if tosave
-                !isdir(resultsdir) && mkpath(resultsdir)
-                resfile = joinpath(resultsdir, string(_hash(results.name, results.commit, results.julia_commit, target)) * ".jld")
-                if !isfile(resfile) || overwrite == true
-                    writeresults(resfile, results)
-                    _benchinfo("Results of the benchmark were written to $resfile")
-                elseif !usesaved
-                    _benchinfo("Found existing results, no output written")
-                end
-            end
-        end
-    else
-        _benchwarn("$(Pkg.dir(pkg)) is dirty, not attempting to file results...")
+    if resultfile != nothing
+        writeresults(resultfile, results)
+        _benchinfo("benchmark results written to $resultfile")
     end
-    after_sha = _shastring(Pkg.dir(pkg), "HEAD")
-
-    if original_sha != after_sha
-        pkgwarn("Failed to return back to original sha $original_sha, package now at $after_sha")
+    if isgitrepo
+        after_sha = _shastring(pkgdir, "HEAD")
+        if original_sha != after_sha
+            warn("Failed to return back to original sha $original_sha, package now at $after_sha")
+        end
     end
     return results
 end
 
-
-
-function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String; 
+function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String;
                       retune=false, custom_loadpath = nothing)
     color = Base.have_color ? "--color=yes" : "--color=no"
     compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
@@ -166,28 +144,27 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
     withenv(target_env...) do
         run(`$(benchmarkconfig.juliacmd) --depwarn=no --code-coverage=$coverage $color $compilecache -e $exec_str`)
     end
-    return load(File(format"JLD", output))
+    return JSON.parsefile(output)
 end
 
 function _runbenchmark_local(file, output, tunefile, retune)
     # Loading
-    _reset_stack()
     include(file)
     suite = if isdefined(Main, :SUITE)
         Main.SUITE
     else
-        _root_group()
+        error("`SUITE` variable not found, make sure the BenchmarkGroup is named `SUITE`")
     end
 
     # Tuning
     if isfile(tunefile) && !retune
-        _benchinfo("Using benchmark tuning data in $tunefile")
-        loadparams!(suite, JLD.load(tunefile, "suite"), :evals, :samples)
+        _benchinfo("using benchmark tuning data in $tunefile")
+        BenchmarkTools.loadparams!(suite, BenchmarkTools.load(tunefile)[1], :evals, :samples);
     else
-        _benchinfo("Creating benchmark tuning file $tunefile")
+        _benchinfo("creating benchmark tuning file $tunefile...")
         mkpath(dirname(tunefile))
         _tune!(suite)
-        save(File(format"JLD", tunefile), "suite", params(suite))
+        BenchmarkTools.save(tunefile, params(suite));
     end
 
     # Running
@@ -196,7 +173,14 @@ function _runbenchmark_local(file, output, tunefile, retune)
     # Output
     vinfo = first(split(readstring(`julia -e 'versioninfo(true)'`), "Environment"))
     juliasha = Base.GIT_VERSION_INFO.commit
-    save(File(format"JLD", output), "results", results, "vinfo", vinfo, "juliasha", juliasha)
+
+    open(output, "w") do iof
+        JSON.print(iof, Dict(
+            "results"  => sprint(BenchmarkTools.save, results),
+            "vinfo"    => vinfo,
+            "juliasha" => juliasha,
+        ))
+    end
     return nothing
 end
 
@@ -236,7 +220,7 @@ function _run(group::BenchmarkTools.BenchmarkGroup, args...;
     return result
 end
 
-function _run(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.params; 
+function _run(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.params;
                    prog = nothing, verbose::Bool = false, pad = "", hierarchy = [], kwargs...)
     res = BenchmarkTools.run_result(b, p; kwargs...)[1]
     if prog != nothing
@@ -245,18 +229,3 @@ function _run(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.para
     end
     return res
 end
-
-"""
-    writeresults(file::String, results::BenchmarkResults)
-
-Writes the [`BenchmarkResults`](@ref) to `file`.
-"""
-writeresults(file::String, results) = save(File(format"JLD", file), "results", results)
-
-
-"""
-    readresults(file::String)
-
-Reads the [`BenchmarkResults`](@ref) stored in `file` (given as a path).
-"""
-readresults(file)  = load(File(format"JLD", file))["results"]

@@ -14,7 +14,6 @@ Assuming that we have gotten a `BenchmarkResults` or `BenchmarkJudgement` from a
 julia> using GitHub, JSON, PkgBenchmark
 
 julia> results = benchmarkpkg("PkgBenchmark");
-[...]
 
 julia> gist_json = JSON.parse(
             """
@@ -34,7 +33,7 @@ julia> posted_gist = create_gist(params = gist_json);
 
 julia> url = get(posted_gist.html_url)
 URI(https://gist.github.com/317378b4fcf2fb4c5585b104c3b177a8)
-``` 
+```
 
 !!! note
     Consider using an extension to your browser to make the gist webpage use full width in order for the tables

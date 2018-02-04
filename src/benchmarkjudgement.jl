@@ -12,7 +12,7 @@ A `BenchmarkJudgement` can be exported to markdown using the function [`export_m
 
 See also [`BenchmarkResults`](@ref)
 """
-immutable BenchmarkJudgement
+struct BenchmarkJudgement
     target_results::BenchmarkResults
     baseline_results::BenchmarkResults
     benchmarkgroup::BenchmarkGroup
@@ -36,14 +36,6 @@ function Base.show(io::IO, judgement::BenchmarkJudgement)
 end
 
 
-"""
-export_markdown(file::String, judgement::BenchmarkJudgement)
-export_markdown(io::IO, judgement::BenchmarkJudgement)
-
-Writes the `judgement` to `file` or `io` in markdown format.
-
-See also: [`BenchmarkJudgement`](@ref)
-"""
 function export_markdown(io::IO, judgement::BenchmarkJudgement)
     target, baseline = judgement.target_results, judgement.baseline_results
     function env_strs(res)
@@ -63,24 +55,24 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement)
             """`$(join(flags, ","))`"""
         end
     end
-    
+
     println(io, """
                 # Benchmark Report for *$(name(target))*
-                
+
                 ## Job Properties
                 * Time of benchmarks:
-                    - Target: $(Base.Dates.format(date(target), "d u Y - H:M"))
-                    - Baseline: $(Base.Dates.format(date(baseline), "d u Y - H:M"))
-                * Package commits: 
+                    - Target: $(Base.Dates.format(date(target), "d u Y - HH:MM"))
+                    - Baseline: $(Base.Dates.format(date(baseline), "d u Y - HH:MM"))
+                * Package commits:
                     - Target: $(commit(target)[1:min(6, length(commit(target)))])
                     - Baseline: $(commit(baseline)[1:min(6, length(commit(baseline)))])
                 * Julia commits:
                     - Target: $(juliacommit(target)[1:min(6, length(juliacommit(target)))])
                     - Baseline: $(juliacommit(baseline)[1:min(6, length(juliacommit(baseline)))])
-                * Julia command flags: 
+                * Julia command flags:
                     - Target: $(jlstr(target))
                     - Baseline: $(jlstr(baseline))
-                * Environment variables: 
+                * Environment variables:
                     - Target: $(env_strs(target))
                     - Baseline: $(env_strs(baseline))
                 """)
@@ -115,7 +107,7 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement)
         println(io, "- `", _idrepr(id), "`")
     end
 
-    println(io)    
+    println(io)
     println(io, "## Julia versioninfo")
 
     println(io, "\n### Target")
