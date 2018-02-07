@@ -7,4 +7,4 @@ Benchmarks are to be written in `<PKGROOT>/benchmark/benchmarks.jl` and are defi
 
 ## Custom requirements for benchmarks
 
-`<PKGROOT>/benchmark/REQUIRE` can contain dependencies needed to run the benchmark suite, similarly how `<PKGROOT>/benchmark/REQUIRE` can contain dependencies for the tests.
+`<PKGROOT>/benchmark/REQUIRE` can contain dependencies needed to run the benchmark suite, similarly how `<PKGROOT>/test/REQUIRE` can contain dependencies for the tests.

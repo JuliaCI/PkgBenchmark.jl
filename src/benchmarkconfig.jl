@@ -19,7 +19,7 @@ end
 
 """
     BenchmarkConfig(;id::Union{String, Void} = nothing,
-                     juliacmd::Cmd = `$(joinpath(JULIA_HOME, Base.julia_exename()))`,
+                     juliacmd::Cmd = `joinpath(JULIA_HOME, Base.julia_exename())`,
                      env::Dict{String, Any} = Dict{String, Any}())
 
 Creates a `BenchmarkConfig` from the following keyword arguments:
