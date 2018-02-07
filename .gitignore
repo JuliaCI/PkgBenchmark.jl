@@ -5,3 +5,4 @@
 .*.sw?
 docs/build
 benchmark/.tune.jld
+deps/already_showed

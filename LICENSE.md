@@ -1,6 +1,6 @@
 The PkgBenchmark.jl package is licensed under the MIT "Expat" License:
 
-> Copyright (c) 2016: Shashi Gowda.
+> Copyright (c) 2016-2018: Shashi Gowda, Kristoffer Carlsson.
 >
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the

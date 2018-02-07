@@ -13,7 +13,7 @@ The following (unexported) methods are defined on a `BenchmarkResults` (written 
 
 `BenchmarkResults` can be exported to markdown using the function [`export_markdown`](@ref).
 """
-immutable BenchmarkResults
+struct BenchmarkResults
     name::String
     commit::String
     benchmarkgroup::BenchmarkGroup
@@ -23,11 +23,6 @@ immutable BenchmarkResults
     benchmarkconfig::BenchmarkConfig
 end
 
-Base.:(==)(r1::BenchmarkResults, r2::BenchmarkResults) = r1.name           == r2.name           &&
-                                                         r1.commit         == r2.commit         &&
-                                                         r1.benchmarkgroup == r2.benchmarkgroup &&
-                                                         r1.date           == r2.date
-
 name(results::BenchmarkResults) = results.name
 commit(results::BenchmarkResults) = results.commit
 juliacommit(results::BenchmarkResults) = results.julia_commit
@@ -36,10 +31,11 @@ date(results::BenchmarkResults) = results.date
 benchmarkconfig(results::BenchmarkResults) = results.benchmarkconfig
 Base.versioninfo(results::BenchmarkResults) = results.vinfo
 
+
 function Base.show(io::IO, results::BenchmarkResults)
     print(io, "Benchmarkresults:\n")
     println(io, "    Package: ", results.name)
-    println(io, "    Date: ", Base.Dates.format(results.date, "m u Y - H:M"))
+    println(io, "    Date: ", Base.Dates.format(results.date, "m u Y - HH:MM"))
     println(io, "    Package commit: ", results.commit[1:min(length(results.commit), 6)])
     println(io, "    Julia commit: ", results.julia_commit[1:6])
     iob = IOBuffer()
@@ -47,12 +43,50 @@ function Base.show(io::IO, results::BenchmarkResults)
     show(ioc, MIME("text/plain"), results.benchmarkgroup)
     println(io,   "    BenchmarkGroup:")
     print(join("        " .* split(String(take!(iob)), "\n"), "\n"))
-end 
+end
 
+"""
+    writeresults(file::String, results::BenchmarkResults)
+
+Writes the [`BenchmarkResults`](@ref) to `file`.
+"""
+function writeresults(file::String, results::BenchmarkResults)
+    open(file, "w") do io
+        JSON.print(io,
+            Dict(
+                "name" => results.name,
+                "commit" => results.commit,
+                "benchmarkgroup" => sprint(BenchmarkTools.save, results.benchmarkgroup),
+                "date" => results.date,
+                "julia_commit" => results.julia_commit,
+                "vinfo" => results.vinfo,
+                "benchmarkconfig" => results.benchmarkconfig
+            )
+        )
+    end
+end
+
+"""
+    readresults(file::String)
+
+Reads the [`BenchmarkResults`](@ref) stored in `file` (given as a path).
+"""
+function readresults(file::String)
+    d = JSON.parsefile(file)
+    BenchmarkResults(
+        d["name"],
+        d["commit"],
+        BenchmarkTools.load(IOBuffer(d["benchmarkgroup"]))[1],
+        DateTime(d["date"]),
+        d["julia_commit"],
+        d["vinfo"],
+        BenchmarkConfig(d["benchmarkconfig"]),
+    )
+end
 
 """
     export_markdown(file::String, results::Union{BenchmarkResults, BenchmarkJudgement})
-    export_markdown(io::IO, results::Union{BenchmarkResults, BenchmarkJudgement})
+    export_markdown(io::IO,       results::Union{BenchmarkResults, BenchmarkJudgement})
 
 Writes the `results` to `file` or `io` in markdown format.
 
@@ -78,11 +112,11 @@ function export_markdown(io::IO, results::BenchmarkResults)
     else
         """`$(join(flags, ","))`"""
     end
-    
+
     println(io, """
                 # Benchmark Report for *$(name(results))*
-                
-                ## Job Properties    
+
+                ## Job Properties
                 * Time of benchmark: $(Base.Dates.format(date(results), "d u Y - H:M"))
                 * Package commit: $(commit(results)[1:min(6, length(commit(results)))])
                 * Julia commit: $(juliacommit(results)[1:min(6, length(juliacommit(results)))])
@@ -93,7 +127,7 @@ function export_markdown(io::IO, results::BenchmarkResults)
       println(io, """
                 ## Results
                 Below is a table of this job's results, obtained by running the benchmarks.
-                The values listed in the `ID` column have the structure `[parent_group, child_group, ..., key]`, and can be used to 
+                The values listed in the `ID` column have the structure `[parent_group, child_group, ..., key]`, and can be used to
                 index into the BaseBenchmarks suite to retrieve the corresponding benchmarks.
                 The percentages accompanying time and memory values in the below table are noise tolerances. The "true"
                 time/memory value for a given benchmark is expected to fall within this percentage of the reported value.
@@ -122,7 +156,7 @@ function export_markdown(io::IO, results::BenchmarkResults)
         println(io, "- `", _idrepr(id), "`")
     end
 
-    println(io)    
+    println(io)
     println(io, "## Julia versioninfo")
     print(io, "```\n", versioninfo(results), "```")
 

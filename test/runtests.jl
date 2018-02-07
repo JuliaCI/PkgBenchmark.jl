@@ -2,7 +2,7 @@ using PkgBenchmark
 using BenchmarkTools
 using Base.Test
 
-const BENCHMARK_DIR = joinpath(dirname(@__FILE__), "..", "benchmark")
+const BENCHMARK_DIR = joinpath(@__DIR__, "..", "benchmark")
 
 function temp_pkg_dir(fn::Function; tmp_dir=joinpath(tempdir(), randstring()),
         remove_tmp_dir::Bool=true, initialize::Bool=true)
@@ -19,7 +19,7 @@ function temp_pkg_dir(fn::Function; tmp_dir=joinpath(tempdir(), randstring()),
             end
             fn()
         finally
-            # remove_tmp_dir && rm(tmp_dir, recursive=true)
+            remove_tmp_dir && try rm(tmp_dir, recursive=true) end
         end
     end
 end
@@ -29,24 +29,16 @@ function test_structure(g)
     @test g["utf8"] |> keys |> collect |> Set == ["join", "plots", "replace"] |> Set
     @test g["utf8"]["plots"] |> keys |> collect == ["fnplot"]
 
-    _keys = Set([(string(f), x) for x in (0.0, pi), f in (sin, cos, tan)])
+    _keys = Set(vec([string((string(f), x)) for x in (0.0, pi), f in (sin, cos, tan)]))
     @test g["trigonometry"]["circular"] |> keys |> collect |> Set == _keys
 end
 
 @testset "structure" begin
-    @testset "macro" begin
-        include(joinpath(BENCHMARK_DIR, "benchmarks.jl"))
-        test_structure(PkgBenchmark._top_group())
-    end
-
-    @testset "dict" begin
-        results = benchmarkpkg("PkgBenchmark", script = joinpath(BENCHMARK_DIR, "benchmarks_dict.jl"), saveresults = false,
-                               tunefile = tempname())
-        test_structure(PkgBenchmark.benchmarkgroup(results))
-        @test PkgBenchmark.name(results) == "PkgBenchmark"
-        @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
-        export_markdown(STDOUT, results)
-    end
+    results = benchmarkpkg("PkgBenchmark")
+    test_structure(PkgBenchmark.benchmarkgroup(results))
+    @test PkgBenchmark.name(results) == "PkgBenchmark"
+    @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
+    export_markdown(STDOUT, results)
 end
 
 const TEST_PACKAGE_NAME = "Example"
@@ -76,7 +68,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
 
             config = BenchmarkConfig(juliacmd = `$(joinpath(JULIA_HOME, Base.julia_exename())) -O3`,
                                     env = Dict("JL_PKGBENCHMARK_TEST_ENV" => 10))
-            @test typeof(benchmarkpkg(TEST_PACKAGE_NAME, config, script=f, saveresults = false; custom_loadpath=old_pkgdir)) == BenchmarkResults
+            @test typeof(benchmarkpkg(TEST_PACKAGE_NAME, config, script=f; custom_loadpath=old_pkgdir)) == BenchmarkResults
             end
         end
 
@@ -92,10 +84,10 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     open(joinpath(testpkg_path, "benchmark", "benchmarks.jl"), "w") do f
         print(f,
         """
-            using PkgBenchmark
-            @benchgroup "trig" begin
-                @bench "sin" sin(2.0)
-            end
+            using BenchmarkTools
+            SUITE = BenchmarkGroup()
+            SUITE["trig"] = BenchmarkGroup()
+            SUITE["trig"]["sin"] = @benchmarkable sin(2.0)
         """)
     end
 
@@ -107,43 +99,43 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
         LibGit2.branch!(repo, "PR")
         touch(joinpath(testpkg_path, "foo"))
         LibGit2.add!(repo, "foo")
-        commit_PR = LibGit2.commit(repo, "PR commit"; author=test_sig, committer=test_sig)        
+        commit_PR = LibGit2.commit(repo, "PR commit"; author=test_sig, committer=test_sig)
         LibGit2.branch!(repo, "master")
         PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "PR"; custom_loadpath=old_pkgdir)
         @test LibGit2.branch(repo) == "master"
 
         # Test we are on a commit and run benchmark on another commit and end up on the commit
-        # The finally doesn't seem to fire in this case...
-        # LibGit2.checkout!(repo, string(commit_master))
-        # PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "PR"; custom_loadpath=old_pkgdir)
-        # @test LibGit2.revparseid(repo, "HEAD") == commit_master
+        LibGit2.checkout!(repo, string(commit_master))
+        PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "PR"; custom_loadpath=old_pkgdir)
+        @test LibGit2.revparseid(repo, "HEAD") == commit_master
     end
 
-    tmp = tempdir()
-    
-    resfile = joinpath(tmp, string(PkgBenchmark._hash(TEST_PACKAGE_NAME, string(commit_master), PkgBenchmark._get_julia_commit(), BenchmarkConfig())) * ".jld")
+    tmp = tempname() * ".json"
 
     # Benchmark dirty repo
-    cp(joinpath(dirname(@__FILE__), "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); remove_destination=true)
-    cp(joinpath(dirname(@__FILE__), "..", "benchmark", "REQUIRE"), joinpath(testpkg_path, "benchmark", "REQUIRE"))
+    cp(joinpath(@__DIR__, "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); remove_destination=true)
+    cp(joinpath(@__DIR__, "..", "benchmark", "REQUIRE"), joinpath(testpkg_path, "benchmark", "REQUIRE"))
     LibGit2.add!(repo, "benchmark/benchmarks.jl")
     LibGit2.add!(repo, "benchmark/REQUIRE")
     @test LibGit2.isdirty(repo)
     @test_throws ErrorException PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir)
-    results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME; custom_loadpath=old_pkgdir, resultsdir=tmp)
+    results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME; custom_loadpath=old_pkgdir, resultfile=tmp)
     test_structure(PkgBenchmark.benchmarkgroup(results))
-    @test !isfile(resfile)
+    @test isfile(tmp)
+    rm(tmp)
 
     # Commit and benchmark non dirty repo
     commitid = LibGit2.commit(repo, "commiting full benchmarks and REQUIRE"; author=test_sig, committer=test_sig)
-    resfile = joinpath(tmp, string(PkgBenchmark._hash(TEST_PACKAGE_NAME, string(commitid), PkgBenchmark._get_julia_commit(), BenchmarkConfig())) * ".jld")
     @test !LibGit2.isdirty(repo)
-    results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir, resultsdir=tmp)
+    results = PkgBenchmark.benchmarkpkg(TEST_PACKAGE_NAME, "HEAD"; custom_loadpath=old_pkgdir, resultfile=tmp)
     @test PkgBenchmark.commit(results) == string(commitid)
-    @test PkgBenchmark.juliacommit(results) == Base.GIT_VERSION_INFO.commit    
+    @test PkgBenchmark.juliacommit(results) == Base.GIT_VERSION_INFO.commit
     test_structure(PkgBenchmark.benchmarkgroup(results))
-    @test isfile(resfile)
-    @test readresults(resfile) == results
+    @test isfile(tmp)
+    r = readresults(tmp)
+    @test r.benchmarkgroup == results.benchmarkgroup
+    @test r.commit == results.commit
+    rm(tmp)
 
     # Make a dummy commit and test comparing HEAD and HEAD~
     touch(joinpath(testpkg_path, "dummy"))
@@ -153,8 +145,8 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     @testset "judging" begin
         judgement = judge(TEST_PACKAGE_NAME, "HEAD~", "HEAD", custom_loadpath=old_pkgdir)
         test_structure(PkgBenchmark.benchmarkgroup(judgement))
-        export_markdown(STDOUT, judgement)        
+        export_markdown(STDOUT, judgement)
         judgement = judge(TEST_PACKAGE_NAME, "HEAD", custom_loadpath=old_pkgdir)
-        test_structure(PkgBenchmark.benchmarkgroup(judgement)) 
+        test_structure(PkgBenchmark.benchmarkgroup(judgement))
     end
 end

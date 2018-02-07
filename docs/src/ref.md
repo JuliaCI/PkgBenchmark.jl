@@ -3,7 +3,7 @@ Pages = ["ref.md"]
 Modules = [PkgBenchmark]
 ```
 
-    ```@autodocs
+```@autodocs
 Modules = [PkgBenchmark]
 Private = false
 ```

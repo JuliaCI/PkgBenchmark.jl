@@ -4,7 +4,7 @@
 
 | **Documentation**                                                               | **PackageEvaluator**                                                                            | **Build Status**                                                                                |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.5-img]][pkg-0.5-url] [![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url] [![Coverage Status][coverage-img]][coverage-url] |
+| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url] [![Coverage Status][coverage-img]][coverage-url] |
 
 ## Introduction
 
@@ -12,7 +12,6 @@ PkgBenchmark provides an interface for Julia package developers to track perform
 
 The package contains the following features
 
-* A macro based interface, similar to the `Base.Test` interface, to define a suite of benchmarks. It is, however, also possible to use the dictionary based interface defined in [BenchmarkTools](https://github.com/JuliaCI/BenchmarkTools.jl) in which case it isn't even needed to depend on this package to write the benchmar suite.
 * Running the benchmark suite at a specified commit, branch or tag. The path to the julia executable, the command line flags, and the environment variables can be customized.
 * Comparing performance of a package between different package commits, branches or tags.
 * Exporting results to markdown for benchmarks and comparisons, similar to how Nanosoldier reports results for the benchmarks on Base Julia.
@@ -32,7 +31,7 @@ julia> Pkg.add("PkgBenchmark")
 
 ## Project Status
 
-The package is tested against Julia `0.5` and `0.6` on Linux and macOS.
+The package is tested against Julia `0.6` on Linux and macOS.
 
 ## Contributing and Questions
 
@@ -48,8 +47,6 @@ Contributions are welcome, as are feature requests and suggestions. Please open 
 [travis-img]: https://travis-ci.org/JuliaCI/PkgBenchmark.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/JuliaCI/PkgBenchmark.jl
 
-[pkg-0.5-img]: http://pkg.julialang.org/badges/PkgBenchmark_0.5.svg
-[pkg-0.5-url]: http://pkg.julialang.org/?pkg=PkgBenchmark&ver=0.5
 [pkg-0.6-img]: http://pkg.julialang.org/badges/PkgBenchmark_0.6.svg
 [pkg-0.6-url]: http://pkg.julialang.org/?pkg=PkgBenchmark&ver=0.6
 
