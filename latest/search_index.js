@@ -45,7 +45,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Defining a benchmark suite",
     "title": "Custom requirements for benchmarks",
     "category": "section",
-    "text": "<PKGROOT>/benchmark/REQUIRE can contain dependencies needed to run the benchmark suite, similarly how <PKGROOT>/benchmark/REQUIRE can contain dependencies for the tests."
+    "text": "<PKGROOT>/benchmark/REQUIRE can contain dependencies needed to run the benchmark suite, similarly how <PKGROOT>/test/REQUIRE can contain dependencies for the tests."
 },
 
 {
@@ -157,7 +157,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Reference",
     "title": "PkgBenchmark.BenchmarkConfig",
     "category": "Method",
-    "text": "BenchmarkConfig(;id::Union{String, Void} = nothing,\n                 juliacmd::Cmd = `/home/travis/julia/bin/julia`,\n                 env::Dict{String, Any} = Dict{String, Any}())\n\nCreates a BenchmarkConfig from the following keyword arguments:\n\nid - A git identifier like a commit, branch, tag, \"HEAD\", \"HEAD~1\" etc.        If id == nothing then benchmark will be done on the current state        of the repo (even if it is dirty).\njuliacmd - Used to exectue the benchmarks, defaults to the julia executable              that the Pkgbenchmark-functions are called from. Can also include command flags.\nenv - Contains custom environment variables that will be active when the         benchmarks are run.\n\nExamples\n\njulia> using Pkgbenchmark\n\njulia> BenchmarkConfig(id = \"performance_improvements\",\n                       juliacmd = `julia -O3`,\n                       env = Dict(\"JULIA_NUM_THREADS\" => 4))\nBenchmarkConfig:\n    id: performance_improvements\n    juliacmd: `julia -O3`\n    env: JULIA_NUM_THREADS => 4\n\n\n\n"
+    "text": "BenchmarkConfig(;id::Union{String, Void} = nothing,\n                 juliacmd::Cmd = `joinpath(JULIA_HOME, Base.julia_exename())`,\n                 env::Dict{String, Any} = Dict{String, Any}())\n\nCreates a BenchmarkConfig from the following keyword arguments:\n\nid - A git identifier like a commit, branch, tag, \"HEAD\", \"HEAD~1\" etc.        If id == nothing then benchmark will be done on the current state        of the repo (even if it is dirty).\njuliacmd - Used to exectue the benchmarks, defaults to the julia executable              that the Pkgbenchmark-functions are called from. Can also include command flags.\nenv - Contains custom environment variables that will be active when the         benchmarks are run.\n\nExamples\n\njulia> using Pkgbenchmark\n\njulia> BenchmarkConfig(id = \"performance_improvements\",\n                       juliacmd = `julia -O3`,\n                       env = Dict(\"JULIA_NUM_THREADS\" => 4))\nBenchmarkConfig:\n    id: performance_improvements\n    juliacmd: `julia -O3`\n    env: JULIA_NUM_THREADS => 4\n\n\n\n"
 },
 
 {
