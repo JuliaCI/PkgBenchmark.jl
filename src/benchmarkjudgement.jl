@@ -35,6 +35,11 @@ function Base.show(io::IO, judgement::BenchmarkJudgement)
                                        base.julia_commit[1:6])
 end
 
+function export_markdown(file::String, results::BenchmarkJudgement)
+    open(file, "w") do f
+        export_markdown(f, results)
+    end
+end
 
 function export_markdown(io::IO, judgement::BenchmarkJudgement)
     target, baseline = judgement.target_results, judgement.baseline_results
@@ -77,6 +82,14 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement)
                     - Baseline: $(env_strs(baseline))
                 """)
 
+    entries = BenchmarkTools.leaves(benchmarkgroup(judgement))
+    entries = entries[sortperm(map(x -> string(first(x)), entries))]
+
+    cw = [2, 10, 12]
+    for (ids, t) in entries
+        _update_col_widths!(cw, ids, t)
+    end
+
     print(io, """
                 ## Results
                 A ratio greater than `1.0` denotes a possible regression (marked with $(_REGRESS_MARK)), while a ratio less
@@ -84,16 +97,13 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement)
                 that indicate possible regressions or improvements - are shown below (thus, an empty table means that all
                 benchmark results remained invariant between builds).
 
-                | ID | time ratio | memory ratio |
-                |----|------------|--------------|
+                | ID$(" "^(cw[1]-2)) | time ratio$(" "^(cw[2]-10)) | memory ratio$(" "^(cw[3]-12)) |
+                |---$("-"^(cw[1]-2))-|-----------$("-"^(cw[2]-10))-|-------------$("-"^(cw[3]-12))-|
                 """)
-
-    entries = BenchmarkTools.leaves(benchmarkgroup(judgement))
-    entries = entries[sortperm(map(x -> string(first(x)), entries))]
 
     for (ids, t) in entries
         if BenchmarkTools.isregression(t) || BenchmarkTools.isimprovement(t)
-            println(io, _resultrow(ids, t))
+            println(io, _resultrow(ids, t, cw))
         end
     end
 

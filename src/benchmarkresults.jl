@@ -134,17 +134,22 @@ function export_markdown(io::IO, results::BenchmarkResults)
                 An empty cell means that the value was zero.
                 """)
 
-    print(io, """
-                | ID | time | GC time | memory | allocations |
-                |----|-----:|--------:|-------:|------------:|
-                """)
-
     entries = BenchmarkTools.leaves(benchmarkgroup(results))
     entries = entries[sortperm(map(x -> string(first(x)), entries))]
 
+    cw = [2, 4, 7, 6, 11]
+    for (ids, t) in entries
+        _update_col_widths!(cw, ids, t)
+    end
+
+    print(io, """
+                | ID$(" "^(cw[1]-2)) | time$(" "^(cw[2]-4)) | GC time$(" "^(cw[3]-7)) | memory$(" "^(cw[4]-6)) | allocations$(" "^(cw[5]-11)) |
+                |---$("-"^(cw[1]-2))-|-----$("-"^(cw[2]-4)):|--------$("-"^(cw[3]-7)):|-------$("-"^(cw[4]-6)):|------------$("-"^(cw[5]-11)):|
+                """)
+
 
     for (ids, t) in entries
-        println(io, _resultrow(ids, t))
+        println(io, _resultrow(ids, t, cw))
     end
     println(io)
     println(io, """
