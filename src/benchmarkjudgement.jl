@@ -27,8 +27,8 @@ function Base.show(io::IO, judgement::BenchmarkJudgement)
     target, base = judgement.target_results, judgement.baseline_results
     print(io, "Benchmarkjudgement (target / baseline):\n")
     println(io, "    Package: ", target.name)
-    println(io, "    Dates: ", Base.Dates.format(target.date,  "m u Y - H:M"), " / ",
-                               Base.Dates.format(base.date, "m u Y - H:M"))
+    println(io, "    Dates: ", Base.Dates.format(target.date,  "d u Y - H:M"), " / ",
+                               Base.Dates.format(base.date, "d u Y - H:M"))
     println(io, "    Package commits: ", target.commit[1:min(length(target.commit), 6)], " / ",
                                         base.commit[1:min(length(base.commit), 6)])
     println(io, "    Julia commits: ", target.julia_commit[1:6], " / ",

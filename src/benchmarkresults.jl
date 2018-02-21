@@ -35,7 +35,7 @@ Base.versioninfo(results::BenchmarkResults) = results.vinfo
 function Base.show(io::IO, results::BenchmarkResults)
     print(io, "Benchmarkresults:\n")
     println(io, "    Package: ", results.name)
-    println(io, "    Date: ", Base.Dates.format(results.date, "m u Y - HH:MM"))
+    println(io, "    Date: ", Base.Dates.format(results.date, "d u Y - HH:MM"))
     println(io, "    Package commit: ", results.commit[1:min(length(results.commit), 6)])
     println(io, "    Julia commit: ", results.julia_commit[1:6])
     iob = IOBuffer()
