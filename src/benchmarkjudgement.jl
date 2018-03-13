@@ -19,8 +19,8 @@ struct BenchmarkJudgement
 end
 
 
-target_result(judgement::BenchmarkJudgement) = judgement.target_result
-baseline_result(judgement::BenchmarkJudgement) = judgement.baseline_result
+target_result(judgement::BenchmarkJudgement) = judgement.target_results
+baseline_result(judgement::BenchmarkJudgement) = judgement.baseline_results
 benchmarkgroup(judgement::BenchmarkJudgement) = judgement.benchmarkgroup
 
 function Base.show(io::IO, judgement::BenchmarkJudgement)
