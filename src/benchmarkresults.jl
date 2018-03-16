@@ -11,7 +11,7 @@ The following (unexported) methods are defined on a `BenchmarkResults` (written 
 * `date(results)::DateTime` - Tthe time when the benchmarks were executed
 * `benchmarkconfig(results)::BenchmarkConfig` - The [`BenchmarkConfig`](@ref) used for the benchmarks.
 
-`BenchmarkResults` can be exported to markdown using the function [`export_markdown`](@ref).
+`BenchmarkResults` can be exported to markdown using the function [`export_markdown`](@ref), and to CSV using the function `writecsv`.
 """
 struct BenchmarkResults
     name::String
@@ -44,6 +44,40 @@ function Base.show(io::IO, results::BenchmarkResults)
     println(io,   "    BenchmarkGroup:")
     print(join("        " .* split(String(take!(iob)), "\n"), "\n"))
 end
+
+
+function writecsv(filename::AbstractString, A::BenchmarkResults; opts...)
+    open(filename, "w") do f writecsv(f, A; opts...) end
+end
+
+
+function writecsv(f::IO, A::BenchmarkResults; header=true, quotes=true)
+    n_ids = 0
+    entries = BenchmarkTools.leaves(benchmarkgroup(A))
+    for (ids, t) in entries
+        if length(ids) > n_ids
+            n_ids = length(ids)
+        end
+    end
+    if header
+        col_headers = vcat(
+            ["ID$d" for d in 1:n_ids],
+            ["time", "time tol", "GC time", "memory", "mem tol", "allocs"])
+        writecsv(f, reshape(col_headers, (1,:)))
+    end
+    for (ids, t) in entries
+        t_val = BenchmarkTools.time(t)
+        t_tol = BenchmarkTools.params(t).time_tolerance
+        gctime = BenchmarkTools.gctime(t)
+        mem = BenchmarkTools.memory(t)
+        m_tol = BenchmarkTools.params(t).memory_tolerance
+        allocs = BenchmarkTools.allocs(t)
+        row = vcat(ids, repeat([""], inner=[n_ids-length(ids)]),
+                   [t_val, t_tol, gctime, mem, m_tol, allocs])
+        writecsv(f, reshape(row, (1,:)); quotes=quotes)
+    end
+end
+
 
 """
     writeresults(file::String, results::BenchmarkResults)

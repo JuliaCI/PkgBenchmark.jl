@@ -5,8 +5,10 @@ module PkgBenchmark
 using BenchmarkTools
 using JSON
 using ProgressMeter
+import Base.DataFmt: writecsv
 
 export benchmarkpkg, judge, writeresults, readresults, export_markdown
+export writecsv
 export BenchmarkConfig, BenchmarkResults, BenchmarkJudgement
 
 include("benchmarkconfig.jl")

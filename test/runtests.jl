@@ -137,6 +137,14 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     @test r.commit == results.commit
     rm(tmp)
 
+    # Write the benchmark result to a CSV file and check the result
+    csvfilename = tempname()
+    writecsv(csvfilename, results)
+    csvdata = readcsv(csvfilename)
+    rm(csvfilename)
+    @test size(csvdata) == (16, 9)
+    @test csvdata[5, 3] == "(\"tan\", π = 3.1415926535897...)"
+
     # Make a dummy commit and test comparing HEAD and HEAD~
     touch(joinpath(testpkg_path, "dummy"))
     LibGit2.add!(repo, "dummy")
@@ -148,5 +156,12 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
         export_markdown(STDOUT, judgement)
         judgement = judge(TEST_PACKAGE_NAME, "HEAD", custom_loadpath=old_pkgdir)
         test_structure(PkgBenchmark.benchmarkgroup(judgement))
+        # Write the benchmark result to a CSV file and check the result
+        csvfilename = tempname()
+        writecsv(csvfilename, judgement)
+        csvdata = readcsv(csvfilename)
+        rm(csvfilename)
+        @test size(csvdata) == (16, 7)
+        @test csvdata[5, 3] == "(\"tan\", π = 3.1415926535897...)"
     end
 end

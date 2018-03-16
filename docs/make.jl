@@ -10,6 +10,7 @@ makedocs(
         "run_benchmarks.md",
         "comparing_commits.md",
         "export_markdown.md",
+        "export_csv.md",
         "Reference" => "ref.md",
     ]
 )

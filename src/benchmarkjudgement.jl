@@ -8,7 +8,7 @@ The following (unexported) methods are defined on a `BenchmarkJudgement` (writte
 * `benchmarkgroup(judgement)::BenchmarkGroup` - a [`BenchmarkGroup`](https://github.com/JuliaCI/BenchmarkTools.jl/blob/master/doc/manual.md#the-benchmarkgroup-type)
    contaning the estimated results
 
-A `BenchmarkJudgement` can be exported to markdown using the function [`export_markdown`](@ref).
+A `BenchmarkJudgement` can be exported to markdown using the function [`export_markdown`](@ref), and to CSV using the function `writecsv`.
 
 See also [`BenchmarkResults`](@ref)
 """
@@ -23,6 +23,7 @@ target_result(judgement::BenchmarkJudgement) = judgement.target_results
 baseline_result(judgement::BenchmarkJudgement) = judgement.baseline_results
 benchmarkgroup(judgement::BenchmarkJudgement) = judgement.benchmarkgroup
 
+
 function Base.show(io::IO, judgement::BenchmarkJudgement)
     target, base = judgement.target_results, judgement.baseline_results
     print(io, "Benchmarkjudgement (target / baseline):\n")
@@ -34,6 +35,41 @@ function Base.show(io::IO, judgement::BenchmarkJudgement)
     println(io, "    Julia commits: ", target.julia_commit[1:6], " / ",
                                        base.julia_commit[1:6])
 end
+
+
+function writecsv(filename::AbstractString, A::BenchmarkJudgement; opts...)
+    open(filename, "w") do f writecsv(f, A; opts...) end
+end
+
+
+function writecsv(f::IO, A::BenchmarkJudgement; header=true, quotes=true)
+    n_ids = 0
+    entries = BenchmarkTools.leaves(benchmarkgroup(A))
+    for (ids, t) in entries
+        if length(ids) > n_ids
+            n_ids = length(ids)
+        end
+    end
+    if header
+        col_headers = vcat(
+            ["ID$d" for d in 1:n_ids],
+            ["time ratio", "time tol", "mem ratio", "mem tol"])
+        writecsv(f, reshape(col_headers, (1,:)))
+    end
+    for (ids, t) in entries
+        t_ratio = @sprintf(
+            "%.2f", BenchmarkTools.time(BenchmarkTools.ratio(t)))
+        t_tol = BenchmarkTools.params(t).time_tolerance
+        m_ratio =  @sprintf(
+            "%.2f", BenchmarkTools.memory(BenchmarkTools.ratio(t)))
+        m_tol = BenchmarkTools.params(t).memory_tolerance
+        row = vcat(ids, repeat([""], inner=[n_ids-length(ids)]),
+                   [t_ratio, t_tol, m_ratio, m_tol])
+        writecsv(f, reshape(row, (1,:)); quotes=quotes)
+    end
+end
+
+
 
 function export_markdown(file::String, results::BenchmarkJudgement)
     open(file, "w") do f
