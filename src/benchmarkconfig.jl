@@ -12,14 +12,14 @@ This includes the following:
 * Custom environment variables (e.g. `JULIA_NUM_THREADS`).
 """
 struct BenchmarkConfig
-    id::Union{String,Void}
+    id::Union{String,Nothing}
     juliacmd::Cmd
     env::Dict{String,Any}
 end
 
 """
-    BenchmarkConfig(;id::Union{String, Void} = nothing,
-                     juliacmd::Cmd = `joinpath(JULIA_HOME, Base.julia_exename())`,
+    BenchmarkConfig(;id::Union{String, Nothing} = nothing,
+                     juliacmd::Cmd = `joinpath(Sys.BINDIR, Base.julia_exename())`,
                      env::Dict{String, Any} = Dict{String, Any}())
 
 Creates a `BenchmarkConfig` from the following keyword arguments:
@@ -44,16 +44,16 @@ BenchmarkConfig:
     env: JULIA_NUM_THREADS => 4
 ```
 """
-function BenchmarkConfig(;id::Union{String,Void} = nothing,
+function BenchmarkConfig(;id::Union{String,Nothing} = nothing,
 
-                 juliacmd::Cmd = `$(joinpath(JULIA_HOME, Base.julia_exename()))`,
+                 juliacmd::Cmd = `$(joinpath(Sys.BINDIR, Base.julia_exename()))`,
                  env::Dict = Dict{String,Any}())
     BenchmarkConfig(id, juliacmd, env)
 end
 
 BenchmarkConfig(cfg::BenchmarkConfig) = cfg
 BenchmarkConfig(str::String) = BenchmarkConfig(id = str)
-BenchmarkConfig(::Void) = BenchmarkConfig()
+BenchmarkConfig(::Nothing) = BenchmarkConfig()
 
 function BenchmarkConfig(d::Dict)
     BenchmarkConfig(

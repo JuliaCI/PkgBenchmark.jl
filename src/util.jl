@@ -51,14 +51,14 @@ end
 _shastring(r::LibGit2.GitRepo, targetname) = string(LibGit2.revparseid(r, targetname))
 _shastring(dir::AbstractString, targetname) = LibGit2.with(r -> _shastring(r, targetname), LibGit2.GitRepo(dir))
 
-_benchinfo(str) = print_with_color(Base.info_color(), STDOUT, "PkgBenchmark: ", str, "\n")
-_benchwarn(str) = print_with_color(Base.info_color(), STDOUT, "PkgBenchmark: ", str, "\n")
+_benchinfo(str) = printstyled(stdout, "PkgBenchmark: ", str, "\n"; color = Base.info_color())
+_benchwarn(str) = printstyled(stdout, "PkgBenchmark: ", str, "\n"; color = Base.info_color())
 
 ############
 # Markdown #
 ############
 
-_idrepr(id) = (str = repr(id); str[searchindex(str, '['):end])
+_idrepr(id) = (str = repr(id); str[coalesce(findfirst(isequal('['), str), 0):end])
 _intpercent(p) = string(ceil(Int, p * 100), "%")
 _resultrow(ids, t::BenchmarkTools.Trial, col_widths) =
     _resultrow(ids, minimum(t), col_widths)

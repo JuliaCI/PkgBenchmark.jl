@@ -1,6 +1,9 @@
 using PkgBenchmark
 using BenchmarkTools
-using Base.Test
+using Test
+using Dates
+using LibGit2
+using Random
 
 const BENCHMARK_DIR = joinpath(@__DIR__, "..", "benchmark")
 
@@ -38,7 +41,7 @@ end
     test_structure(PkgBenchmark.benchmarkgroup(results))
     @test PkgBenchmark.name(results) == "PkgBenchmark"
     @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
-    export_markdown(STDOUT, results)
+    export_markdown(stdout, results)
 end
 
 const TEST_PACKAGE_NAME = "Example"
@@ -48,7 +51,7 @@ tmp_dir = joinpath(tempdir(), randstring())
 old_pkgdir = Pkg.dir()
 
 temp_pkg_dir(;tmp_dir = tmp_dir) do
-    test_sig = LibGit2.Signature("TEST", "TEST@TEST.COM", round(time(), 0), 0)
+    test_sig = LibGit2.Signature("TEST", "TEST@TEST.COM", round(time(); digits=0), 0)
     Pkg.add(TEST_PACKAGE_NAME)
 
     @testset "benchmarkconfig" begin
@@ -66,7 +69,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
                 print(file, str)
             end
 
-            config = BenchmarkConfig(juliacmd = `$(joinpath(JULIA_HOME, Base.julia_exename())) -O3`,
+            config = BenchmarkConfig(juliacmd = `$(joinpath(Sys.BINDIR, Base.julia_exename())) -O3`,
                                     env = Dict("JL_PKGBENCHMARK_TEST_ENV" => 10))
             @test typeof(benchmarkpkg(TEST_PACKAGE_NAME, config, script=f; custom_loadpath=old_pkgdir)) == BenchmarkResults
             end
@@ -113,7 +116,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     tmp = tempname() * ".json"
 
     # Benchmark dirty repo
-    cp(joinpath(@__DIR__, "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); remove_destination=true)
+    cp(joinpath(@__DIR__, "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); force=true)
     cp(joinpath(@__DIR__, "..", "benchmark", "REQUIRE"), joinpath(testpkg_path, "benchmark", "REQUIRE"))
     LibGit2.add!(repo, "benchmark/benchmarks.jl")
     LibGit2.add!(repo, "benchmark/REQUIRE")
@@ -145,7 +148,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     @testset "judging" begin
         judgement = judge(TEST_PACKAGE_NAME, "HEAD~", "HEAD", custom_loadpath=old_pkgdir)
         test_structure(PkgBenchmark.benchmarkgroup(judgement))
-        export_markdown(STDOUT, judgement)
+        export_markdown(stdout, judgement)
         judgement = judge(TEST_PACKAGE_NAME, "HEAD", custom_loadpath=old_pkgdir)
         test_structure(PkgBenchmark.benchmarkgroup(judgement))
     end

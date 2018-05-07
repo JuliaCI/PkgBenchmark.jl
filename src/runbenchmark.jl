@@ -80,7 +80,7 @@ function benchmarkpkg(
         end
 
         local results
-        results_local = _with_reqs(joinpath(dirname(script), "REQUIRE"), () -> info("Resolving dependencies for benchmark...")) do
+        results_local = _with_reqs(joinpath(dirname(script), "REQUIRE"), () -> @info("Resolving dependencies for benchmark...")) do
             _withtemp(tempname()) do f
                 _benchinfo("Running benchmarks...")
                 _runbenchmark(script, f, target, tunefile; retune=retune, custom_loadpath = custom_loadpath)
@@ -123,7 +123,7 @@ end
 function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String;
                       retune=false, custom_loadpath = nothing)
     color = Base.have_color ? "--color=yes" : "--color=no"
-    compilecache = "--compilecache=" * (Bool(Base.JLOptions().use_compilecache) ? "yes" : "no")
+    compilecache = "--compiled-modules=" * (Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
     _file, _output, _tunefile, _custom_loadpath = map(escape_string, (file, output, tunefile, custom_loadpath))
     codecov_option = Base.JLOptions().code_coverage
     coverage = if codecov_option == 0
@@ -150,8 +150,8 @@ end
 function _runbenchmark_local(file, output, tunefile, retune)
     # Loading
     include(file)
-    suite = if isdefined(Main, :SUITE)
-        Main.SUITE
+    suite = if @isdefined SUITE
+        SUITE
     else
         error("`SUITE` variable not found, make sure the BenchmarkGroup is named `SUITE`")
     end

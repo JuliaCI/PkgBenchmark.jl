@@ -33,7 +33,7 @@ BenchmarkConfig:
 ```
 
 The `id` is a commit, branch etc as described in the previous section. An `id` with value `nothing` means that the current state of the package will be benchmarked.
-The default value of `juliacmd` is `joinpath(JULIA_HOME, Base.julia_exename()` which is the command to run the julia executable without any command line arguments.
+The default value of `juliacmd` is `joinpath(Sys.BINDIR, Base.julia_exename()` which is the command to run the julia executable without any command line arguments.
 
 To instead benchmark the branch `PR`, using the julia command `julia -O3`
 with the environment variable `JULIA_NUM_THREADS` set to `4`, the config would be created as
