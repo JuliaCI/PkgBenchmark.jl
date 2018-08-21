@@ -16,19 +16,18 @@ The argument `pkg` can be a name of a package or a path to a directory to a pack
 The result can be used by functions such as [`judge`](@ref). If you choose to, you can save the results manually using
 [`writeresults`](@ref) where `results` is the return value of this function. It can be read back with [`readresults`](@ref).
 
-If a `REQUIRE` file exists in the same folder as `script`, load package requirements from that file before benchmarking.
-
 **Example invocations:**
 
 ```julia
 using PkgBenchmark
 
-benchmarkpkg("MyPkg") # run the benchmarks at the current state of the repository
-benchmarkpkg("MyPkg", "my-feature") # run the benchmarks for a particular branch/commit/tag
-benchmarkpkg("MyPkg", "my-feature"; script="/home/me/mycustombenchmark.jl")
-benchmarkpkg("MyPkg", BenchmarkConfig(id = "my-feature",
-                                      env = Dict("JULIA_NUM_THREADS" => 4),
-                                      juliacmd = `julia -O3`))
+import MyPkg
+benchmarkpkg(pathof(MyPkg)) # run the benchmarks at the current state of the repository
+benchmarkpkg(pathof(MyPkg), "my-feature") # run the benchmarks for a particular branch/commit/tag
+benchmarkpkg(pathof(MyPkg), "my-feature"; script="/home/me/mycustombenchmark.jl")
+benchmarkpkg(pathof(MyPkg), BenchmarkConfig(id = "my-feature",
+                                            env = Dict("JULIA_NUM_THREADS" => 4),
+                                            juliacmd = `julia -O3`))
 ```
 """
 function benchmarkpkg(
@@ -42,31 +41,23 @@ function benchmarkpkg(
     target = BenchmarkConfig(target)
 
     # Locate script
+    pkgdir = joinpath(dirname(pkg), "..")
     if script === nothing
-        if isdir(Pkg.dir(pkg))
-            script = Pkg.dir(pkg, "benchmark", "benchmarks.jl")
+        bench_file = joinpath(pkgdir, "benchmark", "benchmarks.jl")
+        if isfile(bench_file)
+            script = bench_file
+        else
+            error("bencmark script at \"$(abspath(bench_file))\" not found")
         end
-    end
-    if !isfile(script)
-        error("bencmark script at $script not found")
     end
 
     # Locate pacakge
-    if isdir(Pkg.dir(pkg))
-        pkgdir = Pkg.dir(pkg)
-        tunefile = Pkg.dir(".pkgbenchmark", "$(pkg)_tune.json")
-    else
-        pkgdir = pkg
-        tunefile = joinpath(pkgdir, "tune.json")
-        if !isdir(pkgdir)
-            error("package directory at $pkgdir not found")
-        end
-    end
+    tunefile = joinpath(pkgdir, "benchmark", "tune.json")
 
     isgitrepo = isdir(joinpath(pkgdir, ".git"))
     if isgitrepo
         isdirty = LibGit2.with(LibGit2.isdirty, LibGit2.GitRepo(pkgdir))
-        original_sha = _shastring(Pkg.dir(pkg), "HEAD")
+        original_sha = _shastring(pkgdir, "HEAD")
     end
 
     # In this function the package is at the commit we want to benchmark
@@ -80,11 +71,9 @@ function benchmarkpkg(
         end
 
         local results
-        results_local = _with_reqs(joinpath(dirname(script), "REQUIRE"), () -> @info("Resolving dependencies for benchmark...")) do
-            _withtemp(tempname()) do f
-                _benchinfo("Running benchmarks...")
-                _runbenchmark(script, f, target, tunefile; retune=retune, custom_loadpath = custom_loadpath)
-            end
+        results_local = _withtemp(tempname()) do f
+            _benchinfo("Running benchmarks...")
+            _runbenchmark(script, f, target, tunefile; retune=retune, custom_loadpath = custom_loadpath)
         end
         io = IOBuffer(results_local["results"])
         seek(io, 0)
@@ -147,21 +136,21 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
     return JSON.parsefile(output)
 end
 
+
 function _runbenchmark_local(file, output, tunefile, retune)
     # Loading
-    include(file)
-    suite = if @isdefined SUITE
-        SUITE
-    else
+    Base.include(Main, file)
+    if !isdefined(Main, :SUITE)
         error("`SUITE` variable not found, make sure the BenchmarkGroup is named `SUITE`")
     end
+    suite = Main.SUITE
 
     # Tuning
     if isfile(tunefile) && !retune
-        _benchinfo("using benchmark tuning data in $tunefile")
+        _benchinfo("using benchmark tuning data in $(abspath(tunefile))")
         BenchmarkTools.loadparams!(suite, BenchmarkTools.load(tunefile)[1], :evals, :samples);
     else
-        _benchinfo("creating benchmark tuning file $tunefile...")
+        _benchinfo("creating benchmark tuning file $(abspath(tunefile))...")
         mkpath(dirname(tunefile))
         _tune!(suite)
         BenchmarkTools.save(tunefile, params(suite));
@@ -171,7 +160,7 @@ function _runbenchmark_local(file, output, tunefile, retune)
     results = _run(suite)
 
     # Output
-    vinfo = first(split(sprint(versioninfo, true), "Environment"))
+    vinfo = first(split(sprint((io) -> versioninfo(io; verbose=true)), "Environment"))
     juliasha = Base.GIT_VERSION_INFO.commit
 
     open(output, "w") do iof

@@ -4,5 +4,5 @@
 .*~
 .*.sw?
 docs/build
-benchmark/.tune.jld
+benchmark/tune.json
 deps/already_showed

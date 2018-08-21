@@ -57,7 +57,9 @@ BenchmarkConfig(::Nothing) = BenchmarkConfig()
 
 function BenchmarkConfig(d::Dict)
     BenchmarkConfig(
-        [fieldtype(BenchmarkConfig, fname)(d[string(fname)]) for fname in fieldnames(BenchmarkConfig)]...
+        d["id"],
+        Cmd(d["juliacmd"]),
+        d["env"]
     )
 end
 
