@@ -4,7 +4,7 @@
 
 | **Documentation**                                                               | **PackageEvaluator**                                                                            | **Build Status**                                                                                |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url] [![Coverage Status][coverage-img]][coverage-url] |
+| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![Coverage Status][coverage-img]][coverage-url] |
 
 ## Introduction
 
@@ -18,7 +18,7 @@ The package contains the following features
 
 ## Installation
 
-The package is registered in `METADATA.jl` and can be installed with `Pkg.add` as
+The package is registered and can be installed with `Pkg.add` as
 
 ```julia
 julia> Pkg.add("PkgBenchmark")
@@ -46,9 +46,6 @@ Contributions are welcome, as are feature requests and suggestions. Please open 
 
 [travis-img]: https://travis-ci.org/JuliaCI/PkgBenchmark.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/JuliaCI/PkgBenchmark.jl
-
-[pkg-0.6-img]: http://pkg.julialang.org/badges/PkgBenchmark_0.6.svg
-[pkg-0.6-url]: http://pkg.julialang.org/?pkg=PkgBenchmark&ver=0.6
 
 [issues-url]: https://github.com/JuliaCI/PkgBenchmark.jl/issues
 

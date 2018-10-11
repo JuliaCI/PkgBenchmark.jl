@@ -6,7 +6,7 @@ os:
   - osx
 
 julia:
-  - 0.6
+  - 1.0
   - nightly
 
 matrix:
@@ -15,16 +15,6 @@ matrix:
 
 notifications:
   email: false
-
-addons:
-  apt:
-    packages:
-    - hdf5-tools
-
-# uncomment the following lines to override the default test script
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia -e 'Pkg.clone(pwd()); Pkg.build("PkgBenchmark"); Pkg.test("PkgBenchmark"; coverage=true)'
 
 after_success:
   - julia -e 'Pkg.add("Coverage"); cd(Pkg.dir("PkgBenchmark")); using Coverage; Coveralls.submit(Coveralls.process_folder())'

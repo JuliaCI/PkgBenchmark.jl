@@ -6,7 +6,7 @@
 
 **Arguments**:
 
-- `pkg` - The package to benchmark.
+- `pkg` - The path to the package to benchmark, use `pathof(Package)`
 - `target` - What do judge, given as a git id or a [`BenchmarkConfig`](@ref). If skipped, use the current state of the package repo.
 - `baseline` - The commit / [`BenchmarkConfig`](@ref) to compare `target` against.
 
