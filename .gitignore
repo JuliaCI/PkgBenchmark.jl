@@ -6,3 +6,4 @@
 docs/build
 benchmark/tune.json
 deps/already_showed
+deps/build.log
