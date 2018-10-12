@@ -57,7 +57,7 @@ function benchmarkpkg(
         script = joinpath(pkgdir, "benchmark", "benchmarks.jl")
     elseif !isabspath(script)
         script = joinpath(pkgdir, script)
-        end
+    end
 
     if !isfile(script)
         error("benchmark script at $script not found")
@@ -143,7 +143,8 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
 
     target_env = [k => v for (k, v) in benchmarkconfig.env]
     withenv(target_env...) do
-        run(`$(benchmarkconfig.juliacmd) --depwarn=no --code-coverage=$coverage $color $compilecache -e $exec_str`)
+        env_to_use = dirname(Pkg.Types.Context().env.project_file)
+        run(`$(benchmarkconfig.juliacmd) --project=$env_to_use --depwarn=no --code-coverage=$coverage $color $compilecache -e $exec_str`)
     end
     return JSON.parsefile(output)
 end
