@@ -40,15 +40,27 @@ function benchmarkpkg(
     )
     target = BenchmarkConfig(target)
 
-    # Locate script
-    pkgdir = joinpath(dirname(pkg), "..")
-    if script === nothing
-        bench_file = joinpath(pkgdir, "benchmark", "benchmarks.jl")
-        if isfile(bench_file)
-            script = bench_file
+    pkgfile_from_pkgname = Base.locate_package(Base.identify_package(pkg))
+
+    if pkgfile_from_pkgname===nothing
+        if isdir(pkg)
+            pkgdir = pkg
         else
-            error("bencmark script at \"$(abspath(bench_file))\" not found")
+            error("No package '$pkg' found.")
         end
+    else
+        pkgdir = normpath(joinpath(dirname(pkgfile_from_pkgname), ".."))
+    end
+
+    # Locate script
+    if script === nothing
+        script = joinpath(pkgdir, "benchmark", "benchmarks.jl")
+    elseif !isabspath(script)
+        script = joinpath(pkgdir, script)
+    end
+
+    if !isfile(script)
+        error("benchmark script at $script not found")
     end
 
     # Locate pacakge
@@ -131,7 +143,8 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
 
     target_env = [k => v for (k, v) in benchmarkconfig.env]
     withenv(target_env...) do
-        run(`$(benchmarkconfig.juliacmd) --depwarn=no --code-coverage=$coverage $color $compilecache -e $exec_str`)
+        env_to_use = dirname(Pkg.Types.Context().env.project_file)
+        run(`$(benchmarkconfig.juliacmd) --project=$env_to_use --depwarn=no --code-coverage=$coverage $color $compilecache -e $exec_str`)
     end
     return JSON.parsefile(output)
 end
