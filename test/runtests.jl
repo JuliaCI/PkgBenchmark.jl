@@ -4,33 +4,29 @@ using Test
 using Dates
 using LibGit2
 using Random
+using Pkg
 
 const BENCHMARK_DIR = joinpath(@__DIR__, "..", "benchmark")
 
 function temp_pkg_dir(fn::Function; tmp_dir=joinpath(tempdir(), randstring()),
         remove_tmp_dir::Bool=true, initialize::Bool=true)
     # Used in tests below to set up and tear down a sandboxed package directory
-    withenv("JULIA_PKGDIR" => tmp_dir) do
-        @test !isdir(Pkg.dir())
-        try
-            if initialize
-                Pkg.init()
-                @test isdir(Pkg.dir())
-                Pkg.resolve()
-            else
-                mkpath(Pkg.dir())
-            end
-            fn()
-        finally
-            remove_tmp_dir && try rm(tmp_dir, recursive=true) end
-        end
+    try
+        # TODO(nhdaly): Is this right??
+        Pkg.generate(tmp_dir)
+        Pkg.activate(tmp_dir)
+        Pkg.instantiate()
+        fn()
+    finally
+        # TODO(nhdaly): Is there a way to re-activate the previous environment?
+        Pkg.activate()
+        remove_tmp_dir && try rm(tmp_dir, recursive=true) catch end
     end
 end
 
 function test_structure(g)
     @test g |> keys |> collect |> Set == ["utf8", "trigonometry"] |> Set
     @test g["utf8"] |> keys |> collect |> Set == ["join", "plots", "replace"] |> Set
-    @test g["utf8"]["plots"] |> keys |> collect == ["fnplot"]
 
     _keys = Set(vec([string((string(f), x)) for x in (0.0, pi), f in (sin, cos, tan)]))
     @test g["trigonometry"]["circular"] |> keys |> collect |> Set == _keys
@@ -48,17 +44,19 @@ const TEST_PACKAGE_NAME = "Example"
 
 # Set up a test package in a temp folder that we use to test things on
 tmp_dir = joinpath(tempdir(), randstring())
-old_pkgdir = Pkg.dir()
+old_pkgdir = Pkg.depots()[1]
 
 temp_pkg_dir(;tmp_dir = tmp_dir) do
     test_sig = LibGit2.Signature("TEST", "TEST@TEST.COM", round(time(); digits=0), 0)
-    Pkg.add(TEST_PACKAGE_NAME)
+    full_repo_path = joinpath(tmp_dir, TEST_PACKAGE_NAME)
+    Pkg.generate(full_repo_path)
+    Pkg.develop(PackageSpec(path=full_repo_path))
 
     @testset "benchmarkconfig" begin
         PkgBenchmark._withtemp(tempname()) do f
             str = """
             using BenchmarkTools
-            using Base.Test
+            using Test
             SUITE = BenchmarkGroup()
             SUITE["foo"] = @benchmarkable 1+1
 
@@ -70,14 +68,16 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
             end
 
             config = BenchmarkConfig(juliacmd = `$(joinpath(Sys.BINDIR, Base.julia_exename())) -O3`,
-                                    env = Dict("JL_PKGBENCHMARK_TEST_ENV" => 10))
+            env = Dict("JL_PKGBENCHMARK_TEST_ENV" => 10))
             @test typeof(benchmarkpkg(TEST_PACKAGE_NAME, config, script=f; custom_loadpath=old_pkgdir)) == BenchmarkResults
-            end
         end
+    end
 
     # Make a commit with a small benchmarks.jl file
     testpkg_path = Pkg.dir(TEST_PACKAGE_NAME)
+    LibGit2.init(testpkg_path)
     repo = LibGit2.GitRepo(testpkg_path)
+    initial_commit = LibGit2.commit(repo, "Initial Commit"; author=test_sig, committer=test_sig)
     LibGit2.branch!(repo, "master")
 
 
@@ -117,7 +117,6 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
 
     # Benchmark dirty repo
     cp(joinpath(@__DIR__, "..", "benchmark", "benchmarks.jl"), joinpath(testpkg_path, "benchmark", "benchmarks.jl"); force=true)
-    cp(joinpath(@__DIR__, "..", "benchmark", "REQUIRE"), joinpath(testpkg_path, "benchmark", "REQUIRE"))
     LibGit2.add!(repo, "benchmark/benchmarks.jl")
     LibGit2.add!(repo, "benchmark/REQUIRE")
     @test LibGit2.isdirty(repo)
