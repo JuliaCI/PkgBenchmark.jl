@@ -1,5 +1,6 @@
 using PkgBenchmark
 using BenchmarkTools
+using Statistics
 using Test
 using Dates
 using LibGit2
@@ -70,6 +71,21 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
             config = BenchmarkConfig(juliacmd = `$(joinpath(Sys.BINDIR, Base.julia_exename())) -O3`,
             env = Dict("JL_PKGBENCHMARK_TEST_ENV" => 10))
             @test typeof(benchmarkpkg(TEST_PACKAGE_NAME, config, script=f; custom_loadpath=old_pkgdir)) == BenchmarkResults
+        end
+    end
+
+    @testset "postprocess" begin
+        PkgBenchmark._withtemp(tempname()) do f
+            str = """
+            using BenchmarkTools
+            SUITE = BenchmarkGroup()
+            SUITE["foo"] = @benchmarkable for _ in 1:100; 1+1; end
+            """
+            open(f, "w") do file
+                print(file, str)
+            end
+            @test typeof(benchmarkpkg(TEST_PACKAGE_NAME, script=f;
+                postprocess=(r)->(r["foo"] = maximum(r["foo"]); return r))) == BenchmarkResults
         end
     end
 
