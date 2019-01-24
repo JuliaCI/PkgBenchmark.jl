@@ -10,6 +10,7 @@ The argument `pkg` can be a name of a package or a path to a directory to a pack
 **Keyword arguments**:
 
 * `script` - The script with the benchmarks, if not given, defaults to `benchmark/benchmarks.jl` in the package folder.
+* `postprocess` - A function to post-process results. Will be passed the `BenchmarkGroup`, which it can modify, or return a new one.
 * `resultfile` - If set, saves the output to `resultfile`
 * `retune` - Force a re-tune, saving the new tuning to the tune file.
 
@@ -28,12 +29,15 @@ benchmarkpkg(pathof(MyPkg), "my-feature"; script="/home/me/mycustombenchmark.jl"
 benchmarkpkg(pathof(MyPkg), BenchmarkConfig(id = "my-feature",
                                             env = Dict("JULIA_NUM_THREADS" => 4),
                                             juliacmd = `julia -O3`))
+benchmarkpkg(pathof(MyPkg),  # Run the benchmarks and divide the (median of) results by 1000
+    postprocess=(results)->(results["g"] = median(results["g"])/1_000)
 ```
 """
 function benchmarkpkg(
         pkg::String,
         target=BenchmarkConfig();
         script=nothing,
+        postprocess=nothing,
         resultfile=nothing,
         retune=false,
         custom_loadpath="" #= used in tests =#
@@ -90,6 +94,12 @@ function benchmarkpkg(
         io = IOBuffer(results_local["results"])
         seek(io, 0)
         resgroup = BenchmarkTools.load(io)[1]
+        if postprocess != nothing
+            retval = postprocess(resgroup)
+            if retval != nothing
+                resgroup = retval
+            end
+        end
         juliasha = results_local["juliasha"]
         vinfo = results_local["vinfo"]
         results = BenchmarkResults(pkg, shastring, resgroup, now(), juliasha, vinfo, target)
