@@ -125,7 +125,7 @@ function benchmarkpkg(
     if isgitrepo
         after_sha = _shastring(pkgdir, "HEAD")
         if original_sha != after_sha
-            warn("Failed to return back to original sha $original_sha, package now at $after_sha")
+            @warn("Failed to return back to original sha $original_sha, package now at $after_sha")
         end
     end
     return results
