@@ -79,7 +79,7 @@ const _INDENT = "    "
 
 function Base.show(io::IO, bcfg::BenchmarkConfig)
     println(io, "BenchmarkConfig:")
-    print(io, _INDENT, "id: "); show(bcfg.id); println("")
+    print(io, _INDENT, "id: "); show(bcfg.id); println()
     println(io, _INDENT, "juliacmd: ", bcfg.juliacmd)
     print(io, _INDENT, "env: ")
     if !isempty(bcfg.env)
