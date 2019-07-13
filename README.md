@@ -28,7 +28,7 @@ julia> Pkg.add("PkgBenchmark")
 
 ## Project Status
 
-The package is tested against Julia `v1.0` and `v1.1` on Linux and macOS.
+The package is tested against Julia `v1.0` to `v1.2` on Linux and macOS.
 
 ## Contributing and Questions
 
