@@ -14,7 +14,6 @@ function temp_pkg_dir(fn::Function; tmp_dir=joinpath(tempdir(), randstring()),
     # Used in tests below to set up and tear down a sandboxed package directory
     try
         # TODO(nhdaly): Is this right??
-        Pkg.generate(tmp_dir)
         Pkg.activate(tmp_dir)
         Pkg.instantiate()
         fn()
