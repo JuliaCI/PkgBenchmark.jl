@@ -44,7 +44,8 @@ function benchmarkpkg(
     )
     target = BenchmarkConfig(target)
 
-    pkgfile_from_pkgname = Base.locate_package(Base.identify_package(pkg))
+    pkgid = Base.identify_package(pkg)
+    pkgfile_from_pkgname = pkgid === nothing ? nothing : Base.locate_package(pkgid)
 
     if pkgfile_from_pkgname===nothing
         if isdir(pkg)
