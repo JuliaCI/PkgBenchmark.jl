@@ -43,7 +43,7 @@ julia> config = BenchmarkConfig(id = "PR",
                                 juliacmd = `julia -O3`,
                                 env = Dict("JULIA_NUM_THREADS" => 4))
 BenchmarkConfig:
-    id: PR
+    id: "PR"
     juliacmd: `julia -O3`
     env: JULIA_NUM_THREADS => 4
 ```
