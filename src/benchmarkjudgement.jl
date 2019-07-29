@@ -23,6 +23,24 @@ target_result(judgement::BenchmarkJudgement) = judgement.target_results
 baseline_result(judgement::BenchmarkJudgement) = judgement.baseline_results
 benchmarkgroup(judgement::BenchmarkJudgement) = judgement.benchmarkgroup
 
+BenchmarkTools.isinvariant(f, judgement::BenchmarkJudgement) = BenchmarkTools.isinvariant(f, benchmarkgroup(judgement))
+BenchmarkTools.isinvariant(judgement::BenchmarkJudgement) = BenchmarkTools.isinvariant(benchmarkgroup(judgement))
+
+BenchmarkTools.isregression(f, judgement::BenchmarkJudgement) = BenchmarkTools.isregression(f, benchmarkgroup(judgement))
+BenchmarkTools.isregression(judgement::BenchmarkJudgement) = BenchmarkTools.isregression(benchmarkgroup(judgement))
+
+BenchmarkTools.isimprovement(f, judgement::BenchmarkJudgement) = BenchmarkTools.isimprovement(f, benchmarkgroup(judgement))
+BenchmarkTools.isimprovement(judgement::BenchmarkJudgement) = BenchmarkTools.isimprovement(benchmarkgroup(judgement))
+
+BenchmarkTools.invariants(f, judgement::BenchmarkJudgement) = BenchmarkTools.invariants(f, benchmarkgroup(judgement))
+BenchmarkTools.invariants(judgement::BenchmarkJudgement) = BenchmarkTools.invariants(benchmarkgroup(judgement))
+
+BenchmarkTools.regressions(f, judgement::BenchmarkJudgement) = BenchmarkTools.regressions(f, benchmarkgroup(judgement))
+BenchmarkTools.regressions(judgement::BenchmarkJudgement) = BenchmarkTools.regressions(benchmarkgroup(judgement))
+
+BenchmarkTools.improvements(f, judgement::BenchmarkJudgement) = BenchmarkTools.improvements(f, benchmarkgroup(judgement))
+BenchmarkTools.improvements(judgement::BenchmarkJudgement) = BenchmarkTools.improvements(benchmarkgroup(judgement))
+
 function Base.show(io::IO, judgement::BenchmarkJudgement)
     target, base = judgement.target_results, judgement.baseline_results
     print(io, "Benchmarkjudgement (target / baseline):\n")

@@ -11,7 +11,7 @@ using Dates
 using InteractiveUtils
 using Printf
 
-export benchmarkpkg, judge, writeresults, readresults, export_markdown
+export benchmarkpkg, judge, writeresults, readresults, export_markdown, memory
 export BenchmarkConfig, BenchmarkResults, BenchmarkJudgement
 
 include("benchmarkconfig.jl")
