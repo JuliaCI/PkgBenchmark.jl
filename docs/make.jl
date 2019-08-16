@@ -2,7 +2,7 @@ using Documenter, PkgBenchmark
 
 makedocs(
     modules = [PkgBenchmark],
-    format = :html,
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     sitename = "PkgBenchmark.jl",
     pages = Any[
         "Home" => "index.md",
@@ -10,14 +10,9 @@ makedocs(
         "run_benchmarks.md",
         "comparing_commits.md",
         "export_markdown.md",
-        "Reference" => "ref.md",
     ]
 )
 
 deploydocs(
     repo = "github.com/JuliaCI/PkgBenchmark.jl.git",
-    target = "build",
-    julia = "0.6",
-    deps = nothing,
-    make = nothing
 )

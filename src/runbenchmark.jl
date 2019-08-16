@@ -2,7 +2,7 @@
     benchmarkpkg(pkg, [target]::Union{String, BenchmarkConfig}; kwargs...)
 
 Run a benchmark on the package `pkg` using the [`BenchmarkConfig`](@ref) or git identifier `target`.
-Examples of git identifiers are commit shas, branch names, or e.g. "HEAD~1".
+Examples of git identifiers are commit shas, branch names, or e.g. `"HEAD~1"`.
 Return a [`BenchmarkResults`](@ref).
 
 The argument `pkg` can be a name of a package or a path to a directory to a package.

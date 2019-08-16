@@ -10,4 +10,4 @@ The package contains the following features
 
 ## Installation
 
-PkgBenchmark is registered in METADATA so installation is done by running `Pkg.add("PkgBenchmark")`.
+PkgBenchmark is registered so installation is done by running `import Pkg; Pkg.add("PkgBenchmark")`.
