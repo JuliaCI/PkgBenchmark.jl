@@ -4,7 +4,3 @@ Benchmarks are to be written in `<PKGROOT>/benchmark/benchmarks.jl` and are defi
 
 !!! note
     Running this script directly does not actually run the benchmarks, this is the job of PkgBenchmark, see the next section.
-
-## Custom requirements for benchmarks
-
-`<PKGROOT>/benchmark/REQUIRE` can contain dependencies needed to run the benchmark suite, similarly how `<PKGROOT>/test/REQUIRE` can contain dependencies for the tests.

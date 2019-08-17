@@ -1,10 +1,10 @@
+# Running a benchmark suite
+
 ```@meta
 DocTestSetup  = quote
     using PkgBenchmark
 end
 ```
-
-# Running a benchmark suite
 
 Use `benchmarkpkg` to run benchmarks defined in a suite as defined in the previous section.
 
@@ -12,7 +12,7 @@ Use `benchmarkpkg` to run benchmarks defined in a suite as defined in the previo
 benchmarkpkg
 ```
 
-The results of a benchmark is returned as a `BenchmarkResult`
+The results of a benchmark is returned as a `BenchmarkResult`:
 
 ```@docs
 PkgBenchmark.BenchmarkResults
@@ -20,7 +20,12 @@ PkgBenchmark.BenchmarkResults
 
 ## More advanced customization
 
-Instead of passing a commit, branch etc. as a `String` to `benchmarkpkg`, a [`BenchmarkConfig`](@ref) can be passed.
+Instead of passing a commit, branch etc. as a `String` to `benchmarkpkg`, a [`BenchmarkConfig`](@ref) can be passed
+
+```@docs
+PkgBenchmark.BenchmarkConfig
+```
+
 This object contains the package commit, julia command, and what environment variables will
 be used when benchmarking. The default values can be seen by using the default constructor
 
@@ -57,3 +62,10 @@ benchmark("Tensors", config)
 !!! info
     The `id` keyword to the `BenchmarkConfig` does not have to be a branch, it can be most things that git can understand, for example a commit id
     or a tag.
+
+Benchmarks can be saved and read using `writeresults` and ``readresults` respectively:
+
+```@docs
+PkgBenchmark.readresults
+PkgBenchmark.writeresults
+```
