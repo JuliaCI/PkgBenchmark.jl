@@ -41,7 +41,7 @@ function export_markdown(file::String, results::BenchmarkJudgement; kwargs...)
     end
 end
 
-function export_markdown(io::IO, judgement::BenchmarkJudgement; allrows::Bool = false)
+function export_markdown(io::IO, judgement::BenchmarkJudgement; export_invariants::Bool = false)
     target, baseline = judgement.target_results, judgement.baseline_results
     function env_strs(res)
         return if isempty(benchmarkconfig(res).env)
@@ -90,7 +90,7 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement; allrows::Bool = 
         _update_col_widths!(cw, ids, t)
     end
 
-    if allrows
+    if export_invariants
         print(io, """
                     ## Results
                     A ratio greater than `1.0` denotes a possible regression (marked with $(_REGRESS_MARK)), while a ratio less
