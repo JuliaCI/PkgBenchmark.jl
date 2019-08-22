@@ -35,13 +35,13 @@ function Base.show(io::IO, judgement::BenchmarkJudgement)
                                        base.julia_commit[1:6])
 end
 
-function export_markdown(file::String, results::BenchmarkJudgement)
+function export_markdown(file::String, results::BenchmarkJudgement; kwargs...)
     open(file, "w") do f
-        export_markdown(f, results)
+        export_markdown(f, results; kwargs...)
     end
 end
 
-function export_markdown(io::IO, judgement::BenchmarkJudgement)
+function export_markdown(io::IO, judgement::BenchmarkJudgement; export_invariants::Bool = false)
     target, baseline = judgement.target_results, judgement.baseline_results
     function env_strs(res)
         return if isempty(benchmarkconfig(res).env)
@@ -90,20 +90,35 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement)
         _update_col_widths!(cw, ids, t)
     end
 
-    print(io, """
-                ## Results
-                A ratio greater than `1.0` denotes a possible regression (marked with $(_REGRESS_MARK)), while a ratio less
-                than `1.0` denotes a possible improvement (marked with $(_IMPROVE_MARK)). Only significant results - results
-                that indicate possible regressions or improvements - are shown below (thus, an empty table means that all
-                benchmark results remained invariant between builds).
+    if export_invariants
+        print(io, """
+                    ## Results
+                    A ratio greater than `1.0` denotes a possible regression (marked with $(_REGRESS_MARK)), while a ratio less
+                    than `1.0` denotes a possible improvement (marked with $(_IMPROVE_MARK)). All results are shown below.
 
-                | ID$(" "^(cw[1]-2)) | time ratio$(" "^(cw[2]-10)) | memory ratio$(" "^(cw[3]-12)) |
-                |---$("-"^(cw[1]-2))-|-----------$("-"^(cw[2]-10))-|-------------$("-"^(cw[3]-12))-|
-                """)
+                    | ID$(" "^(cw[1]-2)) | time ratio$(" "^(cw[2]-10)) | memory ratio$(" "^(cw[3]-12)) |
+                    |---$("-"^(cw[1]-2))-|-----------$("-"^(cw[2]-10))-|-------------$("-"^(cw[3]-12))-|
+                    """)
 
-    for (ids, t) in entries
-        if BenchmarkTools.isregression(t) || BenchmarkTools.isimprovement(t)
+        for (ids, t) in entries
             println(io, _resultrow(ids, t, cw))
+        end
+    else
+        print(io, """
+                    ## Results
+                    A ratio greater than `1.0` denotes a possible regression (marked with $(_REGRESS_MARK)), while a ratio less
+                    than `1.0` denotes a possible improvement (marked with $(_IMPROVE_MARK)). Only significant results - results
+                    that indicate possible regressions or improvements - are shown below (thus, an empty table means that all
+                    benchmark results remained invariant between builds).
+
+                    | ID$(" "^(cw[1]-2)) | time ratio$(" "^(cw[2]-10)) | memory ratio$(" "^(cw[3]-12)) |
+                    |---$("-"^(cw[1]-2))-|-----------$("-"^(cw[2]-10))-|-------------$("-"^(cw[3]-12))-|
+                    """)
+
+        for (ids, t) in entries
+            if BenchmarkTools.isregression(t) || BenchmarkTools.isimprovement(t)
+                println(io, _resultrow(ids, t, cw))
+            end
         end
     end
 

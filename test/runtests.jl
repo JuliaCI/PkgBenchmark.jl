@@ -163,6 +163,8 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
         judgement = judge(TEST_PACKAGE_NAME, "HEAD~", "HEAD", custom_loadpath=old_pkgdir)
         test_structure(PkgBenchmark.benchmarkgroup(judgement))
         export_markdown(stdout, judgement)
+        export_markdown(stdout, judgement; export_invariants = false)
+        export_markdown(stdout, judgement; export_invariants = true)
         judgement = judge(TEST_PACKAGE_NAME, "HEAD", custom_loadpath=old_pkgdir)
         test_structure(PkgBenchmark.benchmarkgroup(judgement))
     end
