@@ -199,7 +199,7 @@ end
 
 
 function _tune!(group::BenchmarkTools.BenchmarkGroup; verbose::Bool = false, root = true,
-                prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Tuning: "), hierarchy = [], kwargs...)
+                prog = _progress(length(BenchmarkTools.leaves(group)); desc = "Tuning: "), hierarchy = [], kwargs...)
     BenchmarkTools.gcscrub() # run GC before running group, even if individual benchmarks don't manually GC
     i = 1
     for id in keys(group)
@@ -222,7 +222,7 @@ function _tune!(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.pa
 end
 
 function _run(group::BenchmarkTools.BenchmarkGroup, args...;
-              prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Benchmarking: "), hierarchy = [], kwargs...)
+              prog = _progress(length(BenchmarkTools.leaves(group)); desc = "Benchmarking: "), hierarchy = [], kwargs...)
     result = similar(group)
     BenchmarkTools.gcscrub() # run GC before running group, even if individual benchmarks don't manually GC
     i = 1
@@ -242,3 +242,14 @@ function _run(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.para
     end
     return res
 end
+
+is_in_ci() = lowercase(get(ENV, "CI", "false")) == "true"
+# Many CI services set environment variable `CI` to `true`:
+# https://docs.travis-ci.com/user/environment-variables/#default-environment-variables
+# https://www.appveyor.com/docs/environment-variables/
+# https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+
+_progress(n; kwargs...) = Progress(n; dt=is_in_ci() ? 60 * 9.0 : 0.1, kwargs...)
+# Use interval of 9 minute in CI to avoid build timeout in Travis
+# (which defaults to 10 minutes):
+# https://docs.travis-ci.com/user/customizing-the-build/#build-timeouts
