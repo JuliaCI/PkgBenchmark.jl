@@ -13,6 +13,8 @@ The argument `pkg` can be a name of a package or a path to a directory to a pack
 * `postprocess` - A function to post-process results. Will be passed the `BenchmarkGroup`, which it can modify, or return a new one.
 * `resultfile` - If set, saves the output to `resultfile`
 * `retune` - Force a re-tune, saving the new tuning to the tune file.
+* `progressoptions` - Options (a `NamedTuple`) to be passed as keyword arguments to
+  `ProgressMeter.Progress`.
 
 The result can be used by functions such as [`judge`](@ref). If you choose to, you can save the results manually using
 [`writeresults`](@ref) where `results` is the return value of this function. It can be read back with [`readresults`](@ref).
@@ -40,6 +42,7 @@ function benchmarkpkg(
         postprocess=nothing,
         resultfile=nothing,
         retune=false,
+        progressoptions=NamedTuple(),
         custom_loadpath="" #= used in tests =#
     )
     target = BenchmarkConfig(target)
@@ -90,7 +93,10 @@ function benchmarkpkg(
         local results
         results_local = _withtemp(tempname()) do f
             _benchinfo("Running benchmarks...")
-            _runbenchmark(script, f, target, tunefile; retune=retune, custom_loadpath = custom_loadpath)
+            _runbenchmark(script, f, target, tunefile;
+                          retune = retune,
+                          custom_loadpath = custom_loadpath,
+                          progressoptions = progressoptions)
         end
         io = IOBuffer(results_local["results"])
         seek(io, 0)
@@ -133,7 +139,7 @@ function benchmarkpkg(
 end
 
 function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String;
-                      retune=false, custom_loadpath = nothing)
+                      retune = false, custom_loadpath = nothing, progressoptions = NamedTuple())
     color = Base.have_color ? "--color=yes" : "--color=no"
     compilecache = "--compiled-modules=" * (Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
     _file, _output, _tunefile, _custom_loadpath = map(escape_string, (file, output, tunefile, custom_loadpath))
@@ -149,7 +155,7 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
     exec_str *=
         """
         using PkgBenchmark
-        PkgBenchmark._runbenchmark_local("$_file", "$_output", "$_tunefile", $retune )
+        PkgBenchmark._runbenchmark_local($(repr(_file)), $(repr(_output)), $(repr(_tunefile)), $(repr(retune)), $(repr(progressoptions)))
         """
 
     target_env = [k => v for (k, v) in benchmarkconfig.env]
@@ -161,7 +167,7 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
 end
 
 
-function _runbenchmark_local(file, output, tunefile, retune)
+function _runbenchmark_local(file, output, tunefile, retune, progressoptions)
     # Loading
     Base.include(Main, file)
     if !isdefined(Main, :SUITE)
@@ -176,12 +182,12 @@ function _runbenchmark_local(file, output, tunefile, retune)
     else
         _benchinfo("creating benchmark tuning file $(abspath(tunefile))...")
         mkpath(dirname(tunefile))
-        _tune!(suite)
+        _tune!(suite, progressoptions = progressoptions)
         BenchmarkTools.save(tunefile, params(suite));
     end
 
     # Running
-    results = _run(suite)
+    results = _run(suite, progressoptions = progressoptions)
 
     # Output
     vinfo = first(split(sprint((io) -> versioninfo(io; verbose=true)), "Environment"))
@@ -199,7 +205,9 @@ end
 
 
 function _tune!(group::BenchmarkTools.BenchmarkGroup; verbose::Bool = false, root = true,
-                prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Tuning: "), hierarchy = [], kwargs...)
+                progressoptions = NamedTuple(),
+                prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Tuning: ", progressoptions...),
+                hierarchy = [], kwargs...)
     BenchmarkTools.gcscrub() # run GC before running group, even if individual benchmarks don't manually GC
     i = 1
     for id in keys(group)
@@ -222,7 +230,8 @@ function _tune!(b::BenchmarkTools.Benchmark, p::BenchmarkTools.Parameters = b.pa
 end
 
 function _run(group::BenchmarkTools.BenchmarkGroup, args...;
-              prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Benchmarking: "), hierarchy = [], kwargs...)
+              progressoptions = NamedTuple(),
+              prog = Progress(length(BenchmarkTools.leaves(group)); desc = "Benchmarking: ", progressoptions...), hierarchy = [], kwargs...)
     result = similar(group)
     BenchmarkTools.gcscrub() # run GC before running group, even if individual benchmarks don't manually GC
     i = 1
