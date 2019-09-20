@@ -167,5 +167,27 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
         export_markdown(stdout, judgement; export_invariants = true)
         judgement = judge(TEST_PACKAGE_NAME, "HEAD", custom_loadpath=old_pkgdir)
         test_structure(PkgBenchmark.benchmarkgroup(judgement))
+        judgement = judge(TEST_PACKAGE_NAME, "HEAD", "HEAD", custom_loadpath=old_pkgdir)
+        judgement = judge(TEST_PACKAGE_NAME, "HEAD", "HEAD"; custom_loadpath=old_pkgdir, retune=true)
+        @test PkgBenchmark.benchmarkgroup(judgement) == judgement.benchmarkgroup
+        @test PkgBenchmark.benchmarkgroup(judgement) === judgement.benchmarkgroup
+        @test isinvariant(judgement) == isinvariant(judgement.benchmarkgroup)
+        @test isinvariant(time, judgement) == isinvariant(time, judgement.benchmarkgroup)
+        @test isinvariant(memory, judgement) == isinvariant(memory, judgement.benchmarkgroup)
+        @test isregression(judgement) == isregression(judgement.benchmarkgroup)
+        @test isregression(time, judgement) == isregression(time, judgement.benchmarkgroup)
+        @test isregression(memory, judgement) == isregression(memory, judgement.benchmarkgroup)
+        @test isimprovement(judgement) == isimprovement(judgement.benchmarkgroup)
+        @test isimprovement(time, judgement) == isimprovement(time, judgement.benchmarkgroup)
+        @test isimprovement(memory, judgement) == isimprovement(memory, judgement.benchmarkgroup)
+        @test BenchmarkTools.invariants(judgement) == BenchmarkTools.invariants(judgement.benchmarkgroup)
+        @test BenchmarkTools.invariants(time, judgement) == BenchmarkTools.invariants(time, judgement.benchmarkgroup)
+        @test BenchmarkTools.invariants(memory, judgement) == BenchmarkTools.invariants(memory, judgement.benchmarkgroup)
+        @test BenchmarkTools.regressions(judgement) == BenchmarkTools.regressions(judgement.benchmarkgroup)
+        @test BenchmarkTools.regressions(time, judgement) == BenchmarkTools.regressions(time, judgement.benchmarkgroup)
+        @test BenchmarkTools.regressions(memory, judgement) == BenchmarkTools.regressions(memory, judgement.benchmarkgroup)
+        @test BenchmarkTools.improvements(judgement) == BenchmarkTools.improvements(judgement.benchmarkgroup)
+        @test BenchmarkTools.improvements(time, judgement) == BenchmarkTools.improvements(time, judgement.benchmarkgroup)
+        @test BenchmarkTools.improvements(memory, judgement) == BenchmarkTools.improvements(memory, judgement.benchmarkgroup)
     end
 end
