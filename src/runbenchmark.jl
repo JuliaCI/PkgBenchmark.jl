@@ -74,7 +74,7 @@ function benchmarkpkg(
     # Locate pacakge
     tunefile = joinpath(pkgdir, "benchmark", "tune.json")
 
-    isgitrepo = isdir(joinpath(pkgdir, ".git"))
+    isgitrepo = ispath(joinpath(pkgdir, ".git"))
     if isgitrepo
         isdirty = LibGit2.with(LibGit2.isdirty, LibGit2.GitRepo(pkgdir))
         original_sha = _shastring(pkgdir, "HEAD")
