@@ -7,6 +7,19 @@ using LibGit2
 using Random
 using Pkg
 
+if isdefined(Pkg, :dependencies)
+    function get_package_directory(name::AbstractString)::String
+        for pkginfo in values(Pkg.dependencies())
+            if name == pkginfo.name
+                return pkginfo.source
+            end
+        end
+        throw(ArgumentError("Package $name not found"))
+    end
+else
+    get_package_directory(name::AbstractString) = Pkg.dir(name)
+end
+
 const BENCHMARK_DIR = joinpath(@__DIR__, "..", "benchmark")
 
 function temp_pkg_dir(fn::Function; tmp_dir=joinpath(tempdir(), randstring()),
@@ -89,7 +102,7 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
     end
 
     # Make a commit with a small benchmarks.jl file
-    testpkg_path = Pkg.dir(TEST_PACKAGE_NAME)
+    testpkg_path = get_package_directory(TEST_PACKAGE_NAME)
     LibGit2.init(testpkg_path)
     repo = LibGit2.GitRepo(testpkg_path)
     initial_commit = LibGit2.commit(repo, "Initial Commit"; author=test_sig, committer=test_sig)
