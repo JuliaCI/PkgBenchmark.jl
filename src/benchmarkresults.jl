@@ -104,7 +104,7 @@ function export_markdown(file::String, results::BenchmarkResults)
     end
 end
 
-function export_markdown(io::IO, results::BenchmarkResults)
+function export_markdown(io::IO, results::BenchmarkResults; sortby = x -> string(first(x)))
     env_str = if isempty(benchmarkconfig(results).env)
         "None"
     else
@@ -141,7 +141,7 @@ function export_markdown(io::IO, results::BenchmarkResults)
                 """)
 
     entries = BenchmarkTools.leaves(benchmarkgroup(results))
-    entries = entries[sortperm(map(x -> string(first(x)), entries))]
+    entries = entries[sortperm(map(sortby, entries))]
 
     cw = [2, 4, 7, 6, 11]
     for (ids, t) in entries
