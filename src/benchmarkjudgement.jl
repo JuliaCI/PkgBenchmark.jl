@@ -59,7 +59,10 @@ function export_markdown(file::String, results::BenchmarkJudgement; kwargs...)
     end
 end
 
-function export_markdown(io::IO, judgement::BenchmarkJudgement; export_invariants::Bool = false)
+function export_markdown(io::IO,
+                         judgement::BenchmarkJudgement;
+                         export_invariants::Bool = false,
+                         sortby = x -> string(first(x)))
     target, baseline = judgement.target_results, judgement.baseline_results
     function env_strs(res)
         return if isempty(benchmarkconfig(res).env)
@@ -101,7 +104,7 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement; export_invariant
                 """)
 
     entries = BenchmarkTools.leaves(benchmarkgroup(judgement))
-    entries = entries[sortperm(map(x -> string(first(x)), entries))]
+    entries = entries[sortperm(map(sortby, entries))]
 
     cw = [2, 10, 12]
     for (ids, t) in entries
