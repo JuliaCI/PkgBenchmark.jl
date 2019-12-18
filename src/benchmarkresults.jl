@@ -85,10 +85,10 @@ function readresults(file::String)
 end
 
 """
-    export_markdown(file::String, results::BenchmarkResults)
-    export_markdown(io::IO,       results::BenchmarkResults)
-    export_markdown(file::String, results::BenchmarkJudgement; export_invariants=false)
-    export_markdown(io::IO,       results::BenchmarkJudgement; export_invariants=false)
+    export_markdown(file::String, results::BenchmarkResults; sortby = x -> string(first(x)))
+    export_markdown(io::IO,       results::BenchmarkResults; sortby = x -> string(first(x)))
+    export_markdown(file::String, results::BenchmarkJudgement; export_invariants=false, sortby = x -> string(first(x)))
+    export_markdown(io::IO,       results::BenchmarkJudgement; export_invariants=false, sortby = x -> string(first(x)))
 
 Writes the `results` to `file` or `io` in markdown format.
 
@@ -98,9 +98,9 @@ results, set `export_invariants=true`.
 
 See also: [`BenchmarkResults`](@ref), [`BenchmarkJudgement`](@ref)
 """
-function export_markdown(file::String, results::BenchmarkResults)
+function export_markdown(file::String, results::BenchmarkResults; kwargs...)
     open(file, "w") do f
-        export_markdown(f, results)
+        export_markdown(f, results; kwargs...)
     end
 end
 
