@@ -13,7 +13,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 
 [compat]
-BenchmarkTools = "^0.4.3"
+BenchmarkTools = "^0.4.3, 0.5"
 JSON = "0.21"
 ProgressMeter = "1"
 julia = "1"
