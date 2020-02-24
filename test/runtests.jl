@@ -1,4 +1,5 @@
 using PkgBenchmark
+using PkgBenchmark: objectpath, loadobject
 using BenchmarkTools
 using Statistics
 using Test
@@ -52,6 +53,17 @@ end
     @test PkgBenchmark.name(results) == "PkgBenchmark"
     @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
     export_markdown(stdout, results)
+end
+
+@testset "objectpath/loadobject" begin
+    @testset for x in Any[
+        PkgBenchmark.TerminalLogger,
+        benchmarkpkg,
+    ]
+        @test loadobject(objectpath(x)) === x
+        opath = objectpath(x)
+        @test @eval($(Meta.parse(repr(opath)))) == opath
+    end
 end
 
 const TEST_PACKAGE_NAME = "Example"
