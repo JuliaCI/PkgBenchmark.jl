@@ -61,12 +61,6 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
-[[ProgressMeter]]
-deps = ["Distributed", "Printf"]
-git-tree-sha1 = "ea1f4fa0ff5e8b771bf130d87af5b7ef400760bd"
-uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
-version = "1.2.0"
-
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
