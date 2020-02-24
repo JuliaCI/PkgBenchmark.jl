@@ -173,7 +173,7 @@ function objectpath(x)
         if !isdefined(m, n)
             error("Object `$x` is not accessible as `$m.$n`.")
         end
-        return (objectpath(x)..., n)
+        return (objectpath(m)..., n)
     end
 end
 
