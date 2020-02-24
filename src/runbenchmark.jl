@@ -13,6 +13,7 @@ The argument `pkg` can be a name of a package or a path to a directory to a pack
 * `postprocess` - A function to post-process results. Will be passed the `BenchmarkGroup`, which it can modify, or return a new one.
 * `resultfile` - If set, saves the output to `resultfile`
 * `retune` - Force a re-tune, saving the new tuning to the tune file.
+* `verbose::Bool = true` - Print currently running benchmark.
 * `logger_factory` - Specify the logger used during benchmark.  It is a callable object
   (typically a type) with no argument that creates a logger.  It must exist as a constant
   in some package (e.g., an anonymous function does not work).
@@ -44,6 +45,7 @@ function benchmarkpkg(
         postprocess=nothing,
         resultfile=nothing,
         retune=false,
+        verbose::Bool=true,
         logger_factory=nothing,
         progressoptions=nothing,
         custom_loadpath="" #= used in tests =#
@@ -106,6 +108,7 @@ function benchmarkpkg(
             _runbenchmark(script, f, target, tunefile;
                           retune = retune,
                           custom_loadpath = custom_loadpath,
+                          runoptions = (verbose = verbose,),
                           logger_factory = logger_factory)
         end
         io = IOBuffer(results_local["results"])
@@ -201,7 +204,8 @@ function _loadobject(pkg_uuid, pkg_name, fullname...)
 end
 
 function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String;
-                      retune = false, custom_loadpath = nothing, logger_factory = nothing)
+                       retune = false, custom_loadpath = nothing, runoptions = NamedTuple(),
+                       logger_factory = nothing)
     color = Base.have_color ? "--color=yes" : "--color=no"
     compilecache = "--compiled-modules=" * (Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
     _file, _output, _tunefile, _custom_loadpath = map(escape_string, (file, output, tunefile, custom_loadpath))
@@ -225,7 +229,14 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
     exec_str *=
         """
         using PkgBenchmark
-        PkgBenchmark._runbenchmark_local($(repr(_file)), $(repr(_output)), $(repr(_tunefile)), $(repr(retune)), $(repr(logger_factory_path)))
+        PkgBenchmark._runbenchmark_local(
+            $(repr(_file)),
+            $(repr(_output)),
+            $(repr(_tunefile)),
+            $(repr(retune)),
+            $(repr(runoptions)),
+            $(repr(logger_factory_path)),
+        )
         """
 
     target_env = [k => v for (k, v) in benchmarkconfig.env]
@@ -236,13 +247,13 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
     return JSON.parsefile(output)
 end
 
-function _runbenchmark_local(file, output, tunefile, retune, logger_factory_path)
+function _runbenchmark_local(file, output, tunefile, retune, runoptions, logger_factory_path)
     with_logger(loadobject(logger_factory_path)()) do
-        __runbenchmark_local(file, output, tunefile, retune)
+        __runbenchmark_local(file, output, tunefile, retune, runoptions)
     end
 end
 
-function __runbenchmark_local(file, output, tunefile, retune)
+function __runbenchmark_local(file, output, tunefile, retune, runoptions)
     # Loading
     Base.include(Main, file)
     if !isdefined(Main, :SUITE)
@@ -257,12 +268,12 @@ function __runbenchmark_local(file, output, tunefile, retune)
     else
         _benchinfo("creating benchmark tuning file $(abspath(tunefile))...")
         mkpath(dirname(tunefile))
-        BenchmarkTools.tune!(suite)
+        BenchmarkTools.tune!(suite; runoptions...)
         BenchmarkTools.save(tunefile, params(suite));
     end
 
     # Running
-    results = run(suite)
+    results = run(suite; runoptions...)
 
     # Output
     vinfo = first(split(sprint((io) -> versioninfo(io; verbose=true)), "Environment"))
