@@ -149,7 +149,7 @@ function benchmarkpkg(
 end
 
 """
-    objectpath(x) -> (pkg_uuid::String, pkg_name::String, name::Symbol...)
+    objectpath(x) -> (pkg_uuid::Union{String,Nothing}, pkg_name::String, name::Symbol...)
 
 Get the "fullname" of object, prefixed by package ID.
 
@@ -167,7 +167,8 @@ function objectpath(x)
     m = parentmodule(x)
     if x === m
         pkg = Base.PkgId(x)
-        return (string(pkg.uuid), pkg.name)
+        uuid = pkg.uuid === nothing ? nothing : string(pkg.uuid)
+        return (uuid, pkg.name)
     else
         n = nameof(x)
         if !isdefined(m, n)
@@ -194,8 +195,10 @@ true
 ```
 """
 loadobject(path) = _loadobject(path...)
-_loadobject(pkg_uuid, pkg_name, fullname...) =
-    foldl(getproperty, fullname, init=Base.require(Base.PkgId(UUID(pkg_uuid), pkg_name)))
+function _loadobject(pkg_uuid, pkg_name, fullname...)
+    pkgid = Base.PkgId(pkg_uuid === nothing ? pkg_uuid : UUID(pkg_uuid), pkg_name)
+    return foldl(getproperty, fullname, init = Base.require(pkgid))
+end
 
 function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String;
                       retune = false, custom_loadpath = nothing, logger_factory = nothing)

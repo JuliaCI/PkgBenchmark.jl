@@ -58,6 +58,7 @@ end
 @testset "objectpath/loadobject" begin
     @testset for x in Any[
         PkgBenchmark.TerminalLogger,
+        Base.CoreLogging.NullLogger,
         benchmarkpkg,
     ]
         @test loadobject(objectpath(x)) === x
