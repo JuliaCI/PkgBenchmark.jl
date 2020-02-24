@@ -3,6 +3,7 @@ using BenchmarkTools
 using Statistics
 using Test
 using Dates
+using Documenter: doctest
 using LibGit2
 using Random
 using Pkg
@@ -203,4 +204,8 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
         @test BenchmarkTools.improvements(time, judgement) == BenchmarkTools.improvements(time, judgement.benchmarkgroup)
         @test BenchmarkTools.improvements(memory, judgement) == BenchmarkTools.improvements(memory, judgement.benchmarkgroup)
     end
+end
+
+@testset "doctest" begin
+    doctest(PkgBenchmark)
 end

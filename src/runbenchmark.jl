@@ -155,7 +155,7 @@ Get the "fullname" of object, prefixed by package ID.
 
 # Examples
 ```jldoctest
-julia> PkgBenchmark: objectpath
+julia> using PkgBenchmark: objectpath
 
 julia> using Logging
 
@@ -184,7 +184,7 @@ Inverse of `objectpath`.
 
 # Examples
 ```jldoctest
-julia> PkgBenchmark: loadobject
+julia> using PkgBenchmark: loadobject
 
 julia> using Logging
 
