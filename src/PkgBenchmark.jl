@@ -4,12 +4,14 @@ module PkgBenchmark
 
 using BenchmarkTools
 using JSON
-using ProgressMeter
 using Pkg
 using LibGit2
 using Dates
 using InteractiveUtils
 using Printf
+using Logging: with_logger
+using TerminalLoggers: TerminalLogger
+using UUIDs: UUID
 
 export benchmarkpkg, judge, writeresults, readresults, export_markdown, memory
 export BenchmarkConfig, BenchmarkResults, BenchmarkJudgement

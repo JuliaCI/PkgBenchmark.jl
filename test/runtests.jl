@@ -1,8 +1,10 @@
 using PkgBenchmark
+using PkgBenchmark: objectpath, loadobject
 using BenchmarkTools
 using Statistics
 using Test
 using Dates
+using Documenter: doctest
 using LibGit2
 using Random
 using Pkg
@@ -51,6 +53,18 @@ end
     @test PkgBenchmark.name(results) == "PkgBenchmark"
     @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
     export_markdown(stdout, results)
+end
+
+@testset "objectpath/loadobject" begin
+    @testset for x in Any[
+        PkgBenchmark.TerminalLogger,
+        Base.CoreLogging.NullLogger,
+        benchmarkpkg,
+    ]
+        @test loadobject(objectpath(x)) === x
+        opath = objectpath(x)
+        @test @eval($(Meta.parse(repr(opath)))) == opath
+    end
 end
 
 const TEST_PACKAGE_NAME = "Example"
@@ -203,4 +217,8 @@ temp_pkg_dir(;tmp_dir = tmp_dir) do
         @test BenchmarkTools.improvements(time, judgement) == BenchmarkTools.improvements(time, judgement.benchmarkgroup)
         @test BenchmarkTools.improvements(memory, judgement) == BenchmarkTools.improvements(memory, judgement.benchmarkgroup)
     end
+end
+
+@testset "doctest" begin
+    doctest(PkgBenchmark)
 end
