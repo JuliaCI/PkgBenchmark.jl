@@ -11,20 +11,19 @@ julia:
   - 1.2
   - nightly
 
-matrix:
-  allow_failures:
-    - julia: nightly
-
 notifications:
   email: false
 
 jobs:
+  allow_failures:
+    # - julia: nightly
   include:
     - stage: "Documentation"
       julia: 1.2
       os: linux
       script:
-        - julia --color=yes --project=docs/ -e 'using Pkg; Pkg.instantiate()'
+        - julia --color=yes --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
+                                                           Pkg.instantiate()'
         - julia --color=yes --project=docs/ docs/make.jl
       after_success: skip
 
