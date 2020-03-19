@@ -8,7 +8,7 @@ export_markdown
 
 ## Using Github.jl to upload the markdown to a Gist
 
-Assuming that we have gotten a `BenchmarkResults` or `BenchmarkJudgement` from a benchmark, we can then use [GitHub.jl](https://github.com/JuliaWeb/GitHub.jl) to programatically upload the exported markdown to a gist:
+Assuming that we have gotten a `BenchmarkResults` or `BenchmarkJudgement` from a benchmark, we can then use [GitHub.jl](https://github.com/JuliaWeb/GitHub.jl) to programmatically upload the exported markdown to a gist:
 
 ```julia-repl
 julia> using GitHub, JSON, PkgBenchmark
