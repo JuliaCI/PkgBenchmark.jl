@@ -23,7 +23,7 @@ The constructor takes the following keyword arguments:
 * `id` - A git identifier like a commit, branch, tag, "HEAD", "HEAD~1" etc.
          If `id == nothing` then benchmark will be done on the current state
          of the repo (even if it is dirty).
-* `juliacmd` - Used to exectue the benchmarks, defaults to the julia executable
+* `juliacmd` - Used to execute the benchmarks, defaults to the julia executable
                that the Pkgbenchmark-functions are called from. Can also include command flags.
 * `env` - Contains custom environment variables that will be active when the
           benchmarks are run.
