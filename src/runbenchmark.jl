@@ -5,7 +5,8 @@ Run a benchmark on the package `pkg` using the [`BenchmarkConfig`](@ref) or git 
 Examples of git identifiers are commit shas, branch names, or e.g. `"HEAD~1"`.
 Return a [`BenchmarkResults`](@ref).
 
-The argument `pkg` can be a name of a package or a path to a directory to a package.
+The argument `pkg` can be the module of a package, a package name, or the path to the
+package's root directory.
 
 **Keyword arguments**:
 
@@ -27,16 +28,19 @@ The result can be used by functions such as [`judge`](@ref). If you choose to, y
 ```julia
 using PkgBenchmark
 
-benchmarkpkg("MyPkg") # run the benchmarks at the current state of the repository
-benchmarkpkg("MyPkg", "my-feature") # run the benchmarks for a particular branch/commit/tag
-benchmarkpkg("MyPkg", "my-feature"; script="/home/me/mycustombenchmark.jl")
-benchmarkpkg("MyPkg", BenchmarkConfig(id = "my-feature",
+import MyPkg
+benchmarkpkg(MyPkg) # run the benchmarks at the current state of the repository
+benchmarkpkg(MyPkg, "my-feature") # run the benchmarks for a particular branch/commit/tag
+benchmarkpkg(MyPkg, "my-feature"; script="/home/me/mycustombenchmark.jl")
+benchmarkpkg(MyPkg, BenchmarkConfig(id = "my-feature",
                                             env = Dict("JULIA_NUM_THREADS" => 4),
                                             juliacmd = `julia -O3`))
-benchmarkpkg("MyPkg",  # Run the benchmarks and divide the (median of) results by 1000
+benchmarkpkg(MyPkg,  # Run the benchmarks and divide the (median of) results by 1000
     postprocess=(results)->(results["g"] = median(results["g"])/1_000)
 ```
 """
+function benchmarkpkg end
+
 function benchmarkpkg(
         pkg::String,
         target=BenchmarkConfig();
@@ -148,6 +152,13 @@ function benchmarkpkg(
         end
     end
     return results
+end
+
+function benchmarkpkg(pkg::Module, args...; kwargs...)
+    dir = pathof(pkg)
+    dir !== nothing || throw(ArgumentError("Module $pkg is not a package"))
+    pkg_root = dirname(dirname(dir))
+    benchmarkpkg(pkg_root, args...; kwargs...)
 end
 
 """

@@ -1,12 +1,12 @@
 """
-    judge(pkg::String,
+    judge(pkg::Union{Module, String},
           [target]::Union{String, BenchmarkConfig},
           baseline::Union{String, BenchmarkConfig};
           kwargs...)
 
 **Arguments**:
 
-- `pkg` - Package name or directory to benchmark.
+- `pkg` - Package to benchmark. Either a package module, name, or directory.
 - `target` - What do judge, given as a git id or a [`BenchmarkConfig`](@ref). If skipped, use the current state of the package repo.
 - `baseline` - The commit / [`BenchmarkConfig`](@ref) to compare `target` against.
 
@@ -21,7 +21,7 @@ The remaining keyword arguments are passed to [`benchmarkpkg`](@ref)
 
 Returns a [`BenchmarkJudgement`](@ref)
 """
-function BenchmarkTools.judge(pkg::String, target::Union{BenchmarkConfig,String}, baseline::Union{BenchmarkConfig,String};
+function BenchmarkTools.judge(pkg::Union{Module,String}, target::Union{BenchmarkConfig,String}, baseline::Union{BenchmarkConfig,String};
                               f=minimum, judgekwargs=Dict(), kwargs...)
 
     target, baseline = BenchmarkConfig(target), BenchmarkConfig(baseline)
@@ -32,7 +32,7 @@ function BenchmarkTools.judge(pkg::String, target::Union{BenchmarkConfig,String}
     return judge(group_target, group_baseline, f; judgekwargs=judgekwargs)
 end
 
-function BenchmarkTools.judge(pkg::String, baseline::Union{BenchmarkConfig,String}; kwargs...)
+function BenchmarkTools.judge(pkg::Union{Module,String}, baseline::Union{BenchmarkConfig,String}; kwargs...)
     judge(pkg, BenchmarkConfig(), baseline; kwargs...)
 end
 

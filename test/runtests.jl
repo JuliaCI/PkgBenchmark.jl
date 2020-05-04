@@ -24,6 +24,9 @@ end
 
 const BENCHMARK_DIR = joinpath(@__DIR__, "..", "benchmark")
 
+# A module which isn't a package
+module Empty end
+
 function temp_pkg_dir(fn::Function; tmp_dir=joinpath(tempdir(), randstring()),
         remove_tmp_dir::Bool=true, initialize::Bool=true)
     # Used in tests below to set up and tear down a sandboxed package directory
@@ -221,4 +224,9 @@ end
 
 @testset "doctest" begin
     doctest(PkgBenchmark)
+end
+
+@testset "package module" begin
+    @test_throws ArgumentError benchmarkpkg(Empty)
+    @test benchmarkpkg(PkgBenchmark) isa BenchmarkResults
 end
