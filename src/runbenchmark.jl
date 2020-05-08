@@ -27,14 +27,13 @@ The result can be used by functions such as [`judge`](@ref). If you choose to, y
 ```julia
 using PkgBenchmark
 
-import MyPkg
-benchmarkpkg(pathof(MyPkg)) # run the benchmarks at the current state of the repository
-benchmarkpkg(pathof(MyPkg), "my-feature") # run the benchmarks for a particular branch/commit/tag
-benchmarkpkg(pathof(MyPkg), "my-feature"; script="/home/me/mycustombenchmark.jl")
-benchmarkpkg(pathof(MyPkg), BenchmarkConfig(id = "my-feature",
+benchmarkpkg("MyPkg") # run the benchmarks at the current state of the repository
+benchmarkpkg("MyPkg", "my-feature") # run the benchmarks for a particular branch/commit/tag
+benchmarkpkg("MyPkg", "my-feature"; script="/home/me/mycustombenchmark.jl")
+benchmarkpkg("MyPkg", BenchmarkConfig(id = "my-feature",
                                             env = Dict("JULIA_NUM_THREADS" => 4),
                                             juliacmd = `julia -O3`))
-benchmarkpkg(pathof(MyPkg),  # Run the benchmarks and divide the (median of) results by 1000
+benchmarkpkg("MyPkg",  # Run the benchmarks and divide the (median of) results by 1000
     postprocess=(results)->(results["g"] = median(results["g"])/1_000)
 ```
 """
