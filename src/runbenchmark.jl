@@ -228,7 +228,7 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
         )
         """
 
-    # Propogate Julia flags passed into the current Julia process
+    # Propagate Julia flags passed into the current Julia process
     color = if VERSION < v"1.5.0-DEV.576"  # https://github.com/JuliaLang/julia/pull/35324
         Base.have_color ? `--color=yes` : `--color=no`
     else
