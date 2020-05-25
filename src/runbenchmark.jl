@@ -205,17 +205,7 @@ end
 function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkConfig, tunefile::String;
                        retune = false, custom_loadpath = nothing, runoptions = NamedTuple(),
                        logger_factory = nothing)
-    color = Base.have_color ? "--color=yes" : "--color=no"
-    compilecache = "--compiled-modules=" * (Bool(Base.JLOptions().use_compiled_modules) ? "yes" : "no")
     _file, _output, _tunefile, _custom_loadpath = map(escape_string, (file, output, tunefile, custom_loadpath))
-    codecov_option = Base.JLOptions().code_coverage
-    coverage = if codecov_option == 0
-        "none"
-    elseif codecov_option == 1
-        "user"
-    else
-        "all"
-    end
     logger_factory_path = if logger_factory === nothing
         # Default to `TerminalLoggers.TerminalLogger`; load via
         # `PkgBenchmark` namespace so that users don't have to add it
@@ -238,10 +228,20 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
         )
         """
 
+    # Propagate Julia flags passed into the current Julia process
+    color = if VERSION < v"1.5.0-DEV.576"  # https://github.com/JuliaLang/julia/pull/35324
+        Base.have_color ? `--color=yes` : `--color=no`
+    else
+        ``
+    end
+
+    juliacmd = benchmarkconfig.juliacmd
+    juliacmd = `$(Base.julia_cmd(juliacmd[1])) $color $(juliacmd[2:end])`
+
     target_env = [k => v for (k, v) in benchmarkconfig.env]
     withenv(target_env...) do
         env_to_use = dirname(Pkg.Types.Context().env.project_file)
-        run(`$(benchmarkconfig.juliacmd) --project=$env_to_use --depwarn=no --code-coverage=$coverage $color $compilecache -e $exec_str`)
+        run(`$juliacmd --project=$env_to_use --depwarn=no -e $exec_str`)
     end
     return JSON.parsefile(output)
 end
