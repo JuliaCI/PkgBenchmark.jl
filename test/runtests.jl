@@ -56,6 +56,8 @@ end
     @test PkgBenchmark.name(results) == "PkgBenchmark"
     @test Dates.Year(PkgBenchmark.date(results)) == Dates.Year(now())
     export_markdown(stdout, results)
+    str = sprint(show, "text/plain", results)
+    @test occursin(r"[0-9]-element .*\.BenchmarkGroup", str)
 end
 
 @testset "objectpath/loadobject" begin

@@ -42,7 +42,7 @@ function Base.show(io::IO, results::BenchmarkResults)
     ioc = IOContext(iob)
     show(ioc, MIME("text/plain"), results.benchmarkgroup)
     println(io,   "    BenchmarkGroup:")
-    print(join("        " .* split(String(take!(iob)), "\n"), "\n"))
+    print(io, join("        " .* split(String(take!(iob)), "\n"), "\n"))
 end
 
 """
