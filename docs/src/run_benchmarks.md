@@ -69,3 +69,10 @@ Benchmarks can be saved and read using `writeresults` and ``readresults` respect
 PkgBenchmark.readresults
 PkgBenchmark.writeresults
 ```
+
+## Running a benchmark suite in CI
+
+Tracking changes in performance throughout the development of a package can be automated as part of package CI.
+
+[BenchmarkCI.jl](https://github.com/tkf/BenchmarkCI.jl) provides a convenient way to run a PkgBenchmark suite as part of a package's CI actions
+
