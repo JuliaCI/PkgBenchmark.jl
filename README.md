@@ -2,7 +2,12 @@
 
 *Benchmarking tools for Julia packages*
 
- [![][docs-stable-img]][docs-stable-url]  [![][travis-img]][travis-url] [![Build status](https://ci.appveyor.com/api/projects/status/p6yg4dukk8oec3be?svg=true)](https://ci.appveyor.com/project/KristofferC/pkgbenchmark-jl) [![Coverage Status][coverage-img]][coverage-url] 
+[![][docs-stable-img]][docs-stable-url]
+[![][docs-dev-img]][docs-dev-url]
+[![][ci-img]][ci-url]
+[![Coveralls][coveralls-img]][coveralls-url]
+[![Codecov][codecov-img]][codecov-url]
+[![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
 
 ## Introduction
 
@@ -25,10 +30,11 @@ julia> Pkg.add("PkgBenchmark")
 ## Documentation
 
 - [**STABLE**][docs-stable-url] &mdash; **most recently tagged version of the documentation.**
+- [**DEV**][docs-dev-url] &mdash; **most recent development version of the documentation.**
 
 ## Project Status
 
-The package is tested against Julia `v1.0` to `v1.2` on Linux and macOS.
+The package is tested against Julia `v1.0` and the latest `v1.x` on Linux, macOS, and Windows.
 
 ## Contributing and Questions
 
@@ -37,10 +43,16 @@ Contributions are welcome, as are feature requests and suggestions. Please open 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://juliaci.github.io/PkgBenchmark.jl/stable
 
-[travis-img]: https://travis-ci.org/JuliaCI/PkgBenchmark.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/JuliaCI/PkgBenchmark.jl
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://juliaci.github.io/PkgBenchmark.jl/dev
+
+[ci-img]: https://github.com/JuliaCI/PkgBenchmark.jl/workflows/CI/badge.svg
+[ci-url]: https://github.com/JuliaCI/PkgBenchmark.jl/actions?query=workflow%3ACI
 
 [issues-url]: https://github.com/JuliaCI/PkgBenchmark.jl/issues
 
-[coverage-img]: https://coveralls.io/repos/github/JuliaCI/PkgBenchmark.jl/badge.svg?branch=master
-[coverage-url]: https://coveralls.io/github/JuliaCI/PkgBenchmark.jl?branch=master
+[coveralls-img]: https://coveralls.io/repos/github/JuliaCI/PkgBenchmark.jl/badge.svg?branch=master
+[coveralls-url]: https://coveralls.io/github/JuliaCI/PkgBenchmark.jl?branch=master
+
+[codecov-img]: https://codecov.io/gh/JuliaCI/PkgBenchmark.jl/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/JuliaCI/PkgBenchmark.jl
