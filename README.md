@@ -5,7 +5,6 @@
 [![][docs-stable-img]][docs-stable-url]
 [![][docs-dev-img]][docs-dev-url]
 [![][ci-img]][ci-url]
-[![Coveralls][coveralls-img]][coveralls-url]
 [![Codecov][codecov-img]][codecov-url]
 [![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
 
@@ -50,9 +49,6 @@ Contributions are welcome, as are feature requests and suggestions. Please open 
 [ci-url]: https://github.com/JuliaCI/PkgBenchmark.jl/actions?query=workflow%3ACI
 
 [issues-url]: https://github.com/JuliaCI/PkgBenchmark.jl/issues
-
-[coveralls-img]: https://coveralls.io/repos/github/JuliaCI/PkgBenchmark.jl/badge.svg?branch=master
-[coveralls-url]: https://coveralls.io/github/JuliaCI/PkgBenchmark.jl?branch=master
 
 [codecov-img]: https://codecov.io/gh/JuliaCI/PkgBenchmark.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/JuliaCI/PkgBenchmark.jl
