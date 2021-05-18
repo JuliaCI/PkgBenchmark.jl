@@ -46,7 +46,8 @@ function test_structure(g)
     @test g |> keys |> collect |> Set == ["utf8", "trigonometry"] |> Set
     @test g["utf8"] |> keys |> collect |> Set == ["join", "plots", "replace"] |> Set
 
-    _keys = Set(vec([string((string(f), x)) for x in (0.0, pi), f in (sin, cos, tan)]))
+    # fake a simplified version of `BenchmarkTools.makekey` adapted to this example
+    _keys = Set(vec([(string(f), iszero(x) ? x : string(x)) for x in (0.0, pi), f in (sin, cos, tan)]))
     @test g["trigonometry"]["circular"] |> keys |> collect |> Set == _keys
 end
 
