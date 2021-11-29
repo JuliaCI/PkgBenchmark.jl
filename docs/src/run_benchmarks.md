@@ -12,7 +12,7 @@ Use `benchmarkpkg` to run benchmarks defined in a suite as defined in the previo
 benchmarkpkg
 ```
 
-The results of a benchmark is returned as a `BenchmarkResult`:
+The results of a benchmark is returned as a `BenchmarkResults`:
 
 ```@docs
 PkgBenchmark.BenchmarkResults
