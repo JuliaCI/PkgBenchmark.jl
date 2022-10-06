@@ -112,7 +112,7 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement; export_invariant
         print(io, """
                     ## Results
                     A ratio greater than `1.0` denotes a possible regression (marked with $(_REGRESS_MARK)), while a ratio less
-                    than `1.0` denotes a possible improvement (marked with $(_IMPROVE_MARK)). All results are shown below.
+                    than `1.0` denotes a possible improvement (marked with $(_IMPROVE_MARK)). Brackets display [tolerances](https://juliaci.github.io/BenchmarkTools.jl/stable/manual/#Benchmark-Parameters) for the benchmark estimates. All results are shown below.
 
                     | ID$(" "^(cw[1]-2)) | time ratio$(" "^(cw[2]-10)) | memory ratio$(" "^(cw[3]-12)) |
                     |---$("-"^(cw[1]-2))-|-----------$("-"^(cw[2]-10))-|-------------$("-"^(cw[3]-12))-|
@@ -125,7 +125,7 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement; export_invariant
         print(io, """
                     ## Results
                     A ratio greater than `1.0` denotes a possible regression (marked with $(_REGRESS_MARK)), while a ratio less
-                    than `1.0` denotes a possible improvement (marked with $(_IMPROVE_MARK)). Only significant results - results
+                    than `1.0` denotes a possible improvement (marked with $(_IMPROVE_MARK)). Brackets display [tolerances](https://juliaci.github.io/BenchmarkTools.jl/stable/manual/#Benchmark-Parameters) for the benchmark estimates. Only significant results - results
                     that indicate possible regressions or improvements - are shown below (thus, an empty table means that all
                     benchmark results remained invariant between builds).
 
