@@ -56,7 +56,7 @@ BenchmarkConfig:
 To benchmark the package with the config, call [`benchmarkpkg`](@ref) as e.g.
 
 ```julia
-benchmark("Tensors", config)
+benchmarkpkg("Tensors", config)
 ```
 
 !!! info
