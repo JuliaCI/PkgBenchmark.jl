@@ -84,7 +84,7 @@ function Base.show(io::IO, bcfg::BenchmarkConfig)
         for (k, v) in bcfg.env
             if !first
                 println(io)
-                print(io, _INDENT, " "^strwidth("env: "))
+                print(io, _INDENT, " "^textwidth("env: "))
             end
             first = false
             print(io, k, " => ", v)
