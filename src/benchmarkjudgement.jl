@@ -47,10 +47,10 @@ function Base.show(io::IO, judgement::BenchmarkJudgement)
     println(io, "    Package: ", target.name)
     println(io, "    Dates: ", Dates.format(target.date,  "d u Y - H:M"), " / ",
                                Dates.format(base.date, "d u Y - H:M"))
-    println(io, "    Package commits: ", target.commit[1:min(length(target.commit), 6)], " / ",
-                                        base.commit[1:min(length(base.commit), 6)])
-    println(io, "    Julia commits: ", target.julia_commit[1:6], " / ",
-                                       base.julia_commit[1:6])
+    println(io, "    Package commits: ", shorthash(target.commit), " / ",
+                                         shorthash(base.commit))
+    println(io, "    Julia commits: ", shorthash(target.julia_commit), " / ",
+                                       shorthash(base.julia_commit))
 end
 
 function export_markdown(file::String, results::BenchmarkJudgement; kwargs...)
@@ -87,11 +87,11 @@ function export_markdown(io::IO, judgement::BenchmarkJudgement; export_invariant
                     - Target: $(Dates.format(date(target), "d u Y - HH:MM"))
                     - Baseline: $(Dates.format(date(baseline), "d u Y - HH:MM"))
                 * Package commits:
-                    - Target: $(commit(target)[1:min(6, length(commit(target)))])
-                    - Baseline: $(commit(baseline)[1:min(6, length(commit(baseline)))])
+                    - Target: $(shorthash(commit(target)))
+                    - Baseline: $(shorthash(commit(baseline)))
                 * Julia commits:
-                    - Target: $(juliacommit(target)[1:min(6, length(juliacommit(target)))])
-                    - Baseline: $(juliacommit(baseline)[1:min(6, length(juliacommit(baseline)))])
+                    - Target: $(shorthash(juliacommit(target)))
+                    - Baseline: $(shorthash(juliacommit(baseline)))
                 * Julia command flags:
                     - Target: $(jlstr(target))
                     - Baseline: $(jlstr(baseline))

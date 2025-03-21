@@ -31,13 +31,15 @@ date(results::BenchmarkResults) = results.date
 benchmarkconfig(results::BenchmarkResults) = results.benchmarkconfig
 InteractiveUtils.versioninfo(results::BenchmarkResults) = results.vinfo
 
+# Length 7 seems to be the minimum such that GitHub and GitLab interpret it as a Git hash:
+shorthash(hash) = hash[1:min(7, length(hash))]
 
 function Base.show(io::IO, results::BenchmarkResults)
     print(io, "Benchmarkresults:\n")
     println(io, "    Package: ", results.name)
     println(io, "    Date: ", Dates.format(results.date, "d u Y - HH:MM"))
-    println(io, "    Package commit: ", results.commit[1:min(length(results.commit), 6)])
-    println(io, "    Julia commit: ", results.julia_commit[1:6])
+    println(io, "    Package commit: ", shorthash(results.commit))
+    println(io, "    Julia commit: ", shorthash(results.julia_commit))
     iob = IOBuffer()
     ioc = IOContext(iob)
     show(ioc, MIME("text/plain"), results.benchmarkgroup)
@@ -124,8 +126,8 @@ function export_markdown(io::IO, results::BenchmarkResults)
 
                 ## Job Properties
                 * Time of benchmark: $(Dates.format(date(results), "d u Y - H:M"))
-                * Package commit: $(commit(results)[1:min(6, length(commit(results)))])
-                * Julia commit: $(juliacommit(results)[1:min(6, length(juliacommit(results)))])
+                * Package commit: $(shorthash(commit(results)))
+                * Julia commit: $(shorthash(juliacommit(results)))
                 * Julia command flags: $julia_command_flags
                 * Environment variables: $env_str
                 """)
