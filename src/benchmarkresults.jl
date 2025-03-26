@@ -28,6 +28,7 @@ commit(results::BenchmarkResults) = results.commit
 juliacommit(results::BenchmarkResults) = results.julia_commit
 benchmarkgroup(results::BenchmarkResults) = results.benchmarkgroup
 date(results::BenchmarkResults) = results.date
+datestr(results::BenchmarkResults) = Dates.format(date(results), "d u Y - HH:MM")
 benchmarkconfig(results::BenchmarkResults) = results.benchmarkconfig
 InteractiveUtils.versioninfo(results::BenchmarkResults) = results.vinfo
 
@@ -37,7 +38,7 @@ shorthash(hash) = hash[1:min(7, length(hash))]
 function Base.show(io::IO, results::BenchmarkResults)
     print(io, "Benchmarkresults:\n")
     println(io, "    Package: ", results.name)
-    println(io, "    Date: ", Dates.format(results.date, "d u Y - HH:MM"))
+    println(io, "    Date: ", datestr(results))
     println(io, "    Package commit: ", shorthash(results.commit))
     println(io, "    Julia commit: ", shorthash(results.julia_commit))
     iob = IOBuffer()
@@ -125,7 +126,7 @@ function export_markdown(io::IO, results::BenchmarkResults)
                 # Benchmark Report for *$(name(results))*
 
                 ## Job Properties
-                * Time of benchmark: $(Dates.format(date(results), "d u Y - H:M"))
+                * Time of benchmark: $(datestr(results))
                 * Package commit: $(shorthash(commit(results)))
                 * Julia commit: $(shorthash(juliacommit(results)))
                 * Julia command flags: $julia_command_flags

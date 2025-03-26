@@ -173,7 +173,9 @@ julia> using PkgBenchmark: objectpath
 julia> using Logging
 
 julia> objectpath(ConsoleLogger)
-("56ddb016-857b-54e1-b83d-db4d58db5568", "Logging", :ConsoleLogger)
+$(VERSION>v"1.11-" ?
+    (nothing, "Main", :Base, :CoreLogging, :ConsoleLogger) :
+    ("56ddb016-857b-54e1-b83d-db4d58db5568", "Logging", :ConsoleLogger))
 ```
 """
 function objectpath(x)
