@@ -249,7 +249,7 @@ function _runbenchmark(file::String, output::String, benchmarkconfig::BenchmarkC
     end
 
     juliacmd = benchmarkconfig.juliacmd
-    juliacmd = `$(Base.julia_cmd(juliacmd[1])) $color $(juliacmd[2:end])`
+    juliacmd = `$(Base.julia_cmd(juliacmd)) $color`
 
     target_env = [k => v for (k, v) in benchmarkconfig.env]
     withenv(target_env...) do
@@ -291,12 +291,16 @@ function __runbenchmark_local(file, output, tunefile, retune, runoptions)
     vinfo = first(split(sprint((io) -> versioninfo(io; verbose=true)), "Environment"))
     juliasha = Base.GIT_VERSION_INFO.commit
 
-    open(output, "w") do iof
+    # Atomic write to the output file
+    temp_output = tempname()
+    open(temp_output, "w") do iof
         JSON.print(iof, Dict(
             "results"  => sprint(BenchmarkTools.save, results),
             "vinfo"    => vinfo,
             "juliasha" => juliasha,
         ))
     end
+    mv(temp_output, output; force=true)
+
     return nothing
 end
