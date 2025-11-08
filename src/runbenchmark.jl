@@ -268,10 +268,12 @@ end
 function __runbenchmark_local(file, output, tunefile, retune, runoptions)
     # Loading
     Base.include(Main, file)
-    if !isdefined(Main, :SUITE)
-        error("`SUITE` variable not found, make sure the BenchmarkGroup is named `SUITE`")
+    suite = Base.invokelatest() do
+        if !isdefined(Main, :SUITE)
+            error("`SUITE` variable not found, make sure the BenchmarkGroup is named `SUITE`")
+        end
+        getfield(Main, :SUITE)
     end
-    suite = Main.SUITE
 
     # Tuning
     if isfile(tunefile) && !retune
