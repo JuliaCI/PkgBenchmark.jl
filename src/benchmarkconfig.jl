@@ -61,7 +61,7 @@ function BenchmarkConfig(d::AbstractDict)
 end
 
 # Arr!...
-function Base.Cmd(d::Dict)
+function Base.Cmd(d::AbstractDict)
     Cmd(
         Cmd(convert(Vector{String}, d["exec"])),
         d["ignorestatus"],
