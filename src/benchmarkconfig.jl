@@ -52,7 +52,7 @@ BenchmarkConfig(cfg::BenchmarkConfig) = cfg
 BenchmarkConfig(str::String) = BenchmarkConfig(id = str)
 BenchmarkConfig(::Nothing) = BenchmarkConfig()
 
-function BenchmarkConfig(d::Dict)
+function BenchmarkConfig(d::AbstractDict)
     BenchmarkConfig(
         d["id"],
         Cmd(d["juliacmd"]),
