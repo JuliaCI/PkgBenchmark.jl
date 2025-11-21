@@ -52,7 +52,7 @@ BenchmarkConfig(cfg::BenchmarkConfig) = cfg
 BenchmarkConfig(str::String) = BenchmarkConfig(id = str)
 BenchmarkConfig(::Nothing) = BenchmarkConfig()
 
-function BenchmarkConfig(d::Dict)
+function BenchmarkConfig(d::AbstractDict)
     BenchmarkConfig(
         d["id"],
         Cmd(d["juliacmd"]),
@@ -61,7 +61,7 @@ function BenchmarkConfig(d::Dict)
 end
 
 # Arr!...
-function Base.Cmd(d::Dict)
+function Base.Cmd(d::AbstractDict)
     Cmd(
         Cmd(convert(Vector{String}, d["exec"])),
         d["ignorestatus"],

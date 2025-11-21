@@ -1,6 +1,6 @@
 name = "PkgBenchmark"
 uuid = "32113eaa-f34f-5b0d-bd6c-c81e245fc73d"
-version = "0.2.14"
+version = "0.2.15"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -16,7 +16,7 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
 BenchmarkTools = "0.7, 1.0"
-JSON = "0.21"
+JSON = "0.21, 1.2"
 TerminalLoggers = "0.1"
 julia = "1"
 
